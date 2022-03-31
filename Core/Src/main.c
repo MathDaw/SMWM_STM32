@@ -29,6 +29,7 @@
 #include "flick.h"
 #include "lsm6ds33_reg.h"
 #include "math.h"
+#include "stepper.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -187,7 +188,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
 	  uint32_t gesture, touch;
 	  airwheel_data_t airwheel;
 	  char str[20];
