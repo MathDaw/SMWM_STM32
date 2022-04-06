@@ -82,7 +82,8 @@ static void MX_I2C2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+//stepper
+STEPPER* stepper;
 
 void Pulse_Counter(void)
 {
@@ -133,12 +134,40 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* Stepstick */
+
+  /*
+   * Stary kod
   HAL_TIM_Base_Start(&htim4);
 
   HAL_GPIO_WritePin(MOT_RESET_GPIO_Port, MOT_RESET_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(MOT_MODE1_GPIO_Port, MOT_MODE1_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(MOT_MODE2_GPIO_Port, MOT_MODE2_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(MOT_RESET_GPIO_Port, MOT_RESET_Pin, GPIO_PIN_SET);
+  */
+  /*
+   * #define MOT_REF_Pin GPIO_PIN_7
+  #define MOT_REF_GPIO_Port GPIOC
+  #define MOT_DIR1_Pin GPIO_PIN_8
+  #define MOT_DIR1_GPIO_Port GPIOA
+  #define MOT_RESET_Pin GPIO_PIN_9
+  #define MOT_RESET_GPIO_Port GPIOA
+  #define MOT_FAULT_Pin GPIO_PIN_10
+  #define MOT_FAULT_GPIO_Port GPIOA
+  #define MOT_PWM1_Pin GPIO_PIN_3
+  #define MOT_PWM1_GPIO_Port GPIOB
+  #define MOT_MODE1_Pin GPIO_PIN_4
+  #define MOT_MODE1_GPIO_Port GPIOB
+  #define MOT_MODE2_Pin GPIO_PIN_6
+  #define MOT_MODE2_GPIO_Port GPIOB
+   */
+  stepper = stepper_inizialize(
+			GPIOC, GPIO_PIN_7,
+			GPIOA, GPIO_PIN_8,
+			GPIOA, GPIO_PIN_9,
+			GPIOA, GPIO_PIN_10,
+			GPIOB, GPIO_PIN_4,
+			GPIOB, GPIO_PIN_6,
+			&htim2, TIM_CHANNEL_2);
 
   /* LCD */
   BSP_LCD_Init();
@@ -251,6 +280,7 @@ int main(void)
 
 		  pulse_cnt = 500;
 		  HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_2);
+
 	  }
   }
   /* USER CODE END 3 */
@@ -264,8 +294,13 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
+  /** Configure the main internal regulator output voltage
+  */
+  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
@@ -293,21 +328,6 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_I2C1
-                              |RCC_PERIPHCLK_I2C2;
-  PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
-  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
-  PeriphClkInit.I2c2ClockSelection = RCC_I2C2CLKSOURCE_PCLK1;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure the main internal regulator output voltage
-  */
-  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
   {
     Error_Handler();
   }
@@ -675,7 +695,18 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
+{
+	if(htim==stepper->Timer)
+	{
+		stepper->position+=stepper->direction;
+		if(stepper->position==stepper->destination)
+		{
+			HAL_TIM_PWM_Stop(stepper->Timer, stepper->Channel);
+			stepper->is_working=0;
+		}
+	}
+}
 /* USER CODE END 4 */
 
 /**
@@ -707,4 +738,3 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
