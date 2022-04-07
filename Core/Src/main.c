@@ -83,8 +83,8 @@ static void MX_I2C2_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 //stepper
-STEPPER* stepper;
-
+STEPPER stepper;
+/*
 void Pulse_Counter(void)
 {
 	if (pulse_cnt > 0) pulse_cnt--;
@@ -94,7 +94,7 @@ void Pulse_Counter(void)
 		__HAL_TIM_SET_COUNTER(&htim2, 2000);
 	}
 }
-
+*/
 /* USER CODE END 0 */
 
 /**
@@ -160,6 +160,7 @@ int main(void)
   #define MOT_MODE2_Pin GPIO_PIN_6
   #define MOT_MODE2_GPIO_Port GPIOB
    */
+
   stepper = stepper_inizialize(
 			GPIOC, GPIO_PIN_7,
 			GPIOA, GPIO_PIN_8,
@@ -284,12 +285,14 @@ int main(void)
 
 	  }
 	  */
-	  stepper_set_destination(&stepper,2000);
+	  stepper_set_destination(&stepper,20000);
+	  stepper_set_speed(&stepper, 2);
 	  stepper_proceed(&stepper);
 	  while(stepper_is_working(&stepper))
 	  {}
 	  HAL_Delay(500);
 	  stepper_set_destination(&stepper,0);
+	  stepper_set_speed(&stepper, 1);
 	  stepper_proceed(&stepper);
 	  while(stepper_is_working(&stepper))
 	  {}
@@ -709,13 +712,14 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
-	if(htim==stepper->Timer)
+	if(htim==stepper.Timer)
 	{
-		stepper->position+=stepper->direction;
-		if(stepper->position==stepper->destination)
+		stepper.position+=stepper.direction;
+		if(stepper.position==stepper.destination)
 		{
-			HAL_TIM_PWM_Stop(stepper->Timer, stepper->Channel);
-			stepper->is_working=0;
+			HAL_TIM_PWM_Stop(stepper.Timer, stepper.Channel);
+			HAL_TIM_Base_Stop_IT(stepper.Timer);
+			stepper.is_working=0;
 		}
 	}
 }
