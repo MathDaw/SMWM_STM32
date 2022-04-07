@@ -45,6 +45,11 @@ STEPPER* stepper_inizialize(
 	//Inicjalizacja pracy zegara
 	HAL_TIM_Base_Start_IT(tmp->Timer);
 	HAL_GPIO_WritePin(tmp->DirPort, tmp->DirPin, 1);
+	//rozpoczecie pracy
+	HAL_GPIO_WritePin(tmp->ResetPort, tmp->ResetPin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(tmp->Mode1Port, tmp->Mode1Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(tmp->Mode2Port, tmp->Mode2Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(tmp->ResetPort, tmp->ResetPin, GPIO_PIN_SET);
 	return tmp;
 }
 

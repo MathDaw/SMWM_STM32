@@ -217,6 +217,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  /*
 	  uint32_t gesture, touch;
 	  airwheel_data_t airwheel;
 	  char str[20];
@@ -250,7 +251,7 @@ int main(void)
 	  if ((uint8_t) gesture == 2)
 		  HAL_GPIO_TogglePin(MOT_DIR1_GPIO_Port, MOT_DIR1_Pin);
 
-	  /* IMU */
+
 	  HAL_I2C_Mem_Read(&hi2c2, ACC_GYRO_ADDR, STATUS_REG, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
 	  uint8_t tmp_stat = i2c2_buf[0];
 	  if (tmp_stat & SR_XLDA)
@@ -282,6 +283,17 @@ int main(void)
 		  HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_2);
 
 	  }
+	  */
+	  stepper_set_destination(&stepper,2000);
+	  stepper_proceed(&stepper);
+	  while(stepper_is_working(&stepper))
+	  {}
+	  HAL_Delay(500);
+	  stepper_set_destination(&stepper,0);
+	  stepper_proceed(&stepper);
+	  while(stepper_is_working(&stepper))
+	  {}
+	  HAL_Delay(500);
   }
   /* USER CODE END 3 */
 }
