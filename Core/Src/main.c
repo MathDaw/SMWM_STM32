@@ -19,16 +19,30 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-#include "string.h"
-#include "stdio.h"
-#include "stm32_adafruit_lcd.h"
-#include "flick.h"
-#include "lsm6ds33_reg.h"
-#include "math.h"
+#include <flick.h>
+#include <lsm6ds33_reg.h>
+#include <main.h>
+#include <math.h>
+#include <stdio.h>
+#include <stm32_adafruit_lcd.h>
+#include <stm32_hal_legacy.h>
+#include <stm32l476xx.h>
+#include <stm32l4xx_hal_def.h>
+#include <stm32l4xx_hal_flash.h>
+#include <stm32l4xx_hal_gpio.h>
+#include <stm32l4xx_hal_i2c.h>
+#include <stm32l4xx_hal_i2c_ex.h>
+#include <stm32l4xx_hal_pwr_ex.h>
+#include <stm32l4xx_hal_rcc.h>
+#include <stm32l4xx_hal_rcc_ex.h>
+#include <stm32l4xx_hal_spi.h>
+#include <stm32l4xx_hal_tim.h>
+#include <stm32l4xx_hal_tim_ex.h>
+#include <stm32l4xx_hal_uart.h>
+#include <stm32l4xx_hal_uart_ex.h>
+#include <sys/_stdint.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -217,6 +231,15 @@ int main(void)
 	  BSP_LCD_DisplayStringAtLine(2, (uint8_t *) str);
 	  sprintf(str, "t:%lx             ", touch);
 	  BSP_LCD_DisplayStringAtLine(3, (uint8_t *) str);
+
+	  flick_interaction_t interaction=flick_get_interaction(gesture,touch,airwheel);
+
+			  if(interaction == FLICK_TOUCH_SRODEK)
+			  {
+	char wyswietl[]="dotkniete na srodku";
+	  BSP_LCD_DisplayStringAtLine(4, (uint8_t *) wyswietl);
+			  }
+
 
 	  if ((uint8_t) gesture == 2)
 		  HAL_GPIO_TogglePin(MOT_DIR1_GPIO_Port, MOT_DIR1_Pin);

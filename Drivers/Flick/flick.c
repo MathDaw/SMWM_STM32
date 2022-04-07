@@ -159,3 +159,50 @@ flick_data_t flick_poll_data(uint32_t* gest_info, uint32_t* touch_info, airwheel
 
 	return ret;
 }
+
+flick_interaction_t flick_get_interaction(uint32_t gest_info, uint32_t touch_info, airwheel_data_t airwheel)
+{
+	flick_interaction_t ret = FLICK_NO_INTERACTION;
+
+
+	switch (touch_info)
+			{
+				case 0x10:
+					ret = FLICK_TOUCH_GORA;
+					return ret;
+				case 0x4:
+					ret = FLICK_TOUCH_GORA;
+					return ret;
+				case 0x1:
+					ret = FLICK_TOUCH_DOL;
+					return ret;
+				case 0x8:
+					ret = FLICK_TOUCH_PRAWO;
+					return ret;
+				case 0x2:
+					ret = FLICK_TOUCH_LEWO;
+					return ret;
+				default:
+					ret = FLICK_NO_INTERACTION;
+					break;
+			}
+
+	switch (gest_info)
+	{
+		case 0x2:
+			ret = FLICK_SWIPE_PRAWO;
+			return ret;
+		case 0x3:
+			ret = FLICK_SWIPE_LEWO;
+			return ret;
+		default:
+			ret = FLICK_NO_INTERACTION;
+			break;
+	}
+
+
+
+
+	return ret;
+}
+

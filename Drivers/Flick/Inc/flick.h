@@ -53,6 +53,23 @@ typedef enum {
 	FLICK_MSG_NO_MSG          /**< 4 */
 } flick_msg_t;
 
+
+
+/**
+ * @brief Type of interaction detected by Flick
+ */
+
+typedef enum {
+	FLICK_NO_INTERACTION,
+	FLICK_TOUCH_SRODEK,
+	FLICK_TOUCH_GORA,
+	FLICK_TOUCH_DOL,
+	FLICK_TOUCH_PRAWO,
+	FLICK_TOUCH_LEWO,
+	FLICK_SWIPE_PRAWO,
+	FLICK_SWIPE_LEWO
+} flick_interaction_t;
+
 /**
  * @brief Data type for reporting availability of new data
  */
@@ -104,6 +121,29 @@ void flick_set_param(uint16_t param_ID, uint32_t arg0, uint32_t arg1);
  * @return FLICK_NEW_DATA: if any data is available
  */
 flick_data_t flick_poll_data(uint32_t* gest_info, uint32_t* touch_info, airwheel_data_t* airwheel);
+
+
+
+
+
+/**
+ * @brief This function gets type of interaction from polled data
+ *
+ * Function returns first recognized interaction from a set of defined interactions
+ * Prioritizes touch over gestures
+ *
+ * @param gest_info		the 32-bit gesture information (GestureInfo field of the SENSOR_DATA_OUTPUT message) received from flick_poll_data
+ * @param touch_info	the 32-bit gesture information (TouchInfo field of the SENSOR_DATA_OUTPUT message) received from flick_poll_data
+ * @param airwheel		the @b airwheel_data_t structure, updated according to the received data (if any) received from flick_poll_data
+ * @return FLICK_INTERACTION: type of interaction or FLICK_NO_INTERACTION if not recognized
+ */
+
+flick_interaction_t flick_get_interaction(uint32_t gest_info, uint32_t touch_info, airwheel_data_t airwheel);
+
+
+
+
+
 
 /**
  * @}
