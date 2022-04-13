@@ -47,7 +47,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-I2C_HandleTypeDef hi2c1;
+ I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
 
 SPI_HandleTypeDef hspi2;
@@ -218,83 +218,17 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  /*
-	  uint32_t gesture, touch;
-	  airwheel_data_t airwheel;
-	  char str[20];
 
-	  flick_poll_data(&gesture, &touch, &airwheel);
-
-	  if(airwheel.new_data == FLICK_NEW_DATA)
-	  {
-	  	  BSP_LCD_Clear(LCD_COLOR_YELLOW);
-		  BSP_LCD_DrawCircle(50, 110, 22);
-		  BSP_LCD_FillCircle(50, 110, 12);
-
-		  sprintf(str, "pos: %02d cnt: %02d", airwheel.position, airwheel.count);
-		  BSP_LCD_DisplayStringAtLine(4, (uint8_t *) str);
-
-		  uint8_t circy = 110 - 12 * sin(2*3.1416*airwheel.position/32);
-		  uint8_t circx = 50 - 12 * cos(2*3.1416*airwheel.position/32);
-
-		  BSP_LCD_FillCircle(circx, circy, 3);
-
-		  airwheel.new_data = FLICK_NO_DATA;
-	  }
-
-	  sprintf(str, "g:%lx             ", gesture);
-	  BSP_LCD_DisplayStringAtLine(1, (uint8_t *) str);
-	  sprintf(str, "gest:%d           ", (uint8_t) gesture);
-	  BSP_LCD_DisplayStringAtLine(2, (uint8_t *) str);
-	  sprintf(str, "t:%lx             ", touch);
-	  BSP_LCD_DisplayStringAtLine(3, (uint8_t *) str);
-
-	  if ((uint8_t) gesture == 2)
-		  HAL_GPIO_TogglePin(MOT_DIR1_GPIO_Port, MOT_DIR1_Pin);
-
-
-	  HAL_I2C_Mem_Read(&hi2c2, ACC_GYRO_ADDR, STATUS_REG, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
-	  uint8_t tmp_stat = i2c2_buf[0];
-	  if (tmp_stat & SR_XLDA)
-	  {
-		  HAL_I2C_Mem_Read(&hi2c2, ACC_GYRO_ADDR, OUTX_L_XL, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 6, 1);
-		  sprintf(str, "acc %+4hi%+4hi%+4hi",
-				  (int8_t)*(i2c2_buf+1), (int8_t)*(i2c2_buf+3), (int8_t)*(i2c2_buf+5));
-		  BSP_LCD_DisplayStringAtLine(12, (uint8_t *) str);
-	  }
-	  if (tmp_stat & SR_GDA)
-	  {
-		  HAL_I2C_Mem_Read(&hi2c2, ACC_GYRO_ADDR, OUTX_L_G, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 6, 1);
-		  sprintf(str, "gyro %+4hi%+4hi%+4hi",
-				  (int8_t)*(i2c2_buf+1), (int8_t)*(i2c2_buf+3), (int8_t)*(i2c2_buf+5));
-		  BSP_LCD_DisplayStringAtLine(11, (uint8_t *) str);
-	  }
-
-	  HAL_Delay(100);
-
-	  if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
-	  {
-		  float cnt = (float)__HAL_TIM_GetCounter(&htim4) / 10;
-
-		  uint8_t str[20];
-		  sprintf((char*)str, "mot %.1f\r", cnt);
-		  BSP_LCD_DisplayStringAtLine(5, (uint8_t *) str);
-
-		  pulse_cnt = 500;
-		  HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_2);
-
-	  }
-	  */
 	  stepper_set_destination(&stepper,20000);
 	  stepper_set_speed(&stepper, 2);
 	  stepper_proceed(&stepper);
-	  while(stepper_is_working(&stepper))
+	  while(stepper.is_working)
 	  {}
 	  HAL_Delay(500);
 	  stepper_set_destination(&stepper,0);
 	  stepper_set_speed(&stepper, 1);
 	  stepper_proceed(&stepper);
-	  while(stepper_is_working(&stepper))
+	  while(stepper.is_working)
 	  {}
 	  HAL_Delay(500);
   }
@@ -316,6 +250,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
@@ -333,6 +268,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -376,12 +312,14 @@ static void MX_I2C1_Init(void)
   {
     Error_Handler();
   }
+
   /** Configure Analogue filter
   */
   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
   {
     Error_Handler();
   }
+
   /** Configure Digital filter
   */
   if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
@@ -422,12 +360,14 @@ static void MX_I2C2_Init(void)
   {
     Error_Handler();
   }
+
   /** Configure Analogue filter
   */
   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
   {
     Error_Handler();
   }
+
   /** Configure Digital filter
   */
   if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
@@ -648,7 +588,7 @@ static void MX_GPIO_Init(void)
                           |FLICK_RESET_Pin|MOT_REF_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, LD2_Pin|MOT_DIR1_Pin|MOT_RESET_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LD2_Pin|MOT_DIR1_Pin|MOT_RESET_Pin|MOT_E_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, MOT_MODE1_Pin|MOT_MODE2_Pin, GPIO_PIN_RESET);
@@ -673,8 +613,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(LCD_RST_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LD2_Pin MOT_DIR1_Pin MOT_RESET_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin|MOT_DIR1_Pin|MOT_RESET_Pin;
+  /*Configure GPIO pins : LD2_Pin MOT_DIR1_Pin MOT_RESET_Pin MOT_E_Pin */
+  GPIO_InitStruct.Pin = LD2_Pin|MOT_DIR1_Pin|MOT_RESET_Pin|MOT_E_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -693,12 +633,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : MOT_FAULT_Pin */
-  GPIO_InitStruct.Pin = MOT_FAULT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(MOT_FAULT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : MOT_MODE1_Pin MOT_MODE2_Pin */
   GPIO_InitStruct.Pin = MOT_MODE1_Pin|MOT_MODE2_Pin;
@@ -719,6 +653,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 		{
 			HAL_TIM_PWM_Stop(stepper.Timer, stepper.Channel);
 			HAL_TIM_Base_Stop_IT(stepper.Timer);
+			HAL_GPIO_WritePin(stepper.EPort, stepper.EPin, GPIO_PIN_SET);
 			stepper.is_working=0;
 		}
 	}
@@ -753,4 +688,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
