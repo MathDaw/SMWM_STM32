@@ -77,6 +77,8 @@ I2C_HandleTypeDef *hi2cflick = &hi2c1;
 SPI_HandleTypeDef *hnucleo_Spi = &hspi2;
 
 int pulse_cnt;
+int servo_speed=50;
+uint8_t rotation_cnt=0;
 
 /* USER CODE END PV */
 
@@ -234,23 +236,24 @@ int main(void)
 
 	  flick_interaction_t interaction=flick_get_interaction(gesture,touch,airwheel);
 
+
+/*
 			  if(interaction == FLICK_TOUCH_SRODEK)
 			  {
 	char wyswietl[]="dotkniete na srodku";
 	  BSP_LCD_DisplayStringAtLine(4, (uint8_t *) wyswietl);
 			  }
-
-			  if(interaction == FLICK_TOUCH_GORA)
+			  else if(interaction == FLICK_TOUCH_GORA)
 			  {
 	char wyswietl[]="dotkniete na gorze";
 	  BSP_LCD_DisplayStringAtLine(4, (uint8_t *) wyswietl);
 			  }
 	  else{
-			char wyswietl[]="";
+			char wyswietl[]="                  ";
 	BSP_LCD_DisplayStringAtLine(4, (uint8_t *) wyswietl);
 	  }
 
-
+*/
 	  if ((uint8_t) gesture == 2)
 		  HAL_GPIO_TogglePin(MOT_DIR1_GPIO_Port, MOT_DIR1_Pin);
 

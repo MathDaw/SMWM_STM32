@@ -142,11 +142,30 @@ flick_interaction_t flick_get_interaction(uint32_t gest_info, uint32_t touch_inf
 
 
 
+/**
+ * @brief This function changes the value of servo_speed so it doesn't exceed 0 or 100
+ *
+ *
+ * @param servo_speed	the int servo speed info
+ * @param value_change  the value which is added to servo_speed
+ */
+
+void flick_servo_value_change(int* servo_speed,int value_change);
 
 
 
 /**
- * @}
+ * @brief This function changes the speed of servo
+ *
+ * Function changes the speed of servo from airwheel data
+ *
+ * @param servo_speed	the int servo speed info
+ * @param airwheel		the @b airwheel_data_t structure, updated according to the received data (if any) received from flick_poll_data
  */
+
+void flick_set_speed(int* servo_speed, airwheel_data_t airwheel,uint8_t* rotation_cnt);
+
+
+
 
 #endif /* INC_FLICK_H_ */

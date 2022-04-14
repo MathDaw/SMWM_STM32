@@ -168,7 +168,7 @@ flick_interaction_t flick_get_interaction(uint32_t gest_info, uint32_t touch_inf
 	switch (touch_info)
 			{
 				case 0x10:
-					ret = FLICK_TOUCH_GORA;
+					ret = FLICK_TOUCH_SRODEK;
 					return ret;
 				case 0x4:
 					ret = FLICK_TOUCH_GORA;
@@ -206,3 +206,47 @@ flick_interaction_t flick_get_interaction(uint32_t gest_info, uint32_t touch_inf
 	return ret;
 }
 
+
+void flick_servo_value_change(int* servo_speed,int value_change){
+
+	servo_speed= servo_speed+value_change;
+
+	if(servo_speed+value_change>100){
+		*servo_speed=100;
+	}
+
+	if(servo_speed+value_change<0){
+		*servo_speed=0;
+	}
+
+	return;
+}
+
+void flick_set_speed(int* servo_speed, airwheel_data_t airwheel,uint8_t* rotation_cnt){
+
+	if (airwheel.count>rotation_cnt){
+		if(airwheel.count==7 && rotation_cnt==0){		//to znaczy, że obracam w lewo i przekręciłem licznik
+			flick_servo_value_change(&servo_speed,-10);
+			rotation_cnt = (uint8_t*) airwheel.count;
+		}
+
+		else
+		{
+		flick_servo_value_change(&servo_speed,10);
+		rotation_cnt = (uint8_t*) airwheel.count;
+
+	}}
+	else if (airwheel.count<rotation_cnt)
+	{		if(airwheel.count==0 && rotation_cnt==7){		//to znaczy, że obracam w prawo i przekręciłem licznik
+		flick_servo_value_change(&servo_speed,10);
+		rotation_cnt = (uint8_t*) airwheel.count;
+	}
+	else{
+		flick_servo_value_change(&servo_speed,-10);
+		rotation_cnt = (uint8_t*) airwheel.count;
+	}}
+
+
+	return;
+
+}
