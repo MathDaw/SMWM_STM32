@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>test_L476</name>
+	<name>SMWM_STM32</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -30,11 +30,10 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>index.html</name>
-			<type>1</type>
-			<locationURI>PROJECT_LOC/Docs/html/index.html</locationURI>
-		</link>
-	</linkedResources>
+	<variableList>
+		<variable>
+			<name>copy_PROJECT_LOC</name>
+			<value>$%7BPARENT-6-PROJECT_LOC%7D/GitHub/SMWM_STM32</value>
+		</variable>
+	</variableList>
 </projectDescription>

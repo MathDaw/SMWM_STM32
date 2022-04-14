@@ -219,14 +219,14 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  stepper_set_destination(&stepper,20000);
-	  stepper_set_speed(&stepper, 2);
+	  stepper_set_destination(&stepper,95);
+	  stepper_set_speed(&stepper, 60);
 	  stepper_proceed(&stepper);
 	  while(stepper.is_working)
 	  {}
 	  HAL_Delay(500);
-	  stepper_set_destination(&stepper,0);
-	  stepper_set_speed(&stepper, 1);
+	  stepper_set_destination(&stepper,5);
+	  stepper_set_speed(&stepper, 100);
 	  stepper_proceed(&stepper);
 	  while(stepper.is_working)
 	  {}
@@ -653,7 +653,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 		{
 			HAL_TIM_PWM_Stop(stepper.Timer, stepper.Channel);
 			HAL_TIM_Base_Stop_IT(stepper.Timer);
-			HAL_GPIO_WritePin(stepper.EPort, stepper.EPin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(stepper.EPort, stepper.EPin, GPIO_PIN_RESET);
 			stepper.is_working=0;
 		}
 	}

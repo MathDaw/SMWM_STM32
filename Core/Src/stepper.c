@@ -9,8 +9,9 @@
   ******************************************************************************
   */
 
-#include"stepper.h"
-#include<main.h>
+#include "stepper.h"
+#include <main.h>
+#include <math.h>
 
 STEPPER stepper_inizialize(
 		GPIO_TypeDef* RefPort, uint16_t RefPin,
@@ -52,13 +53,15 @@ STEPPER stepper_inizialize(
 	HAL_GPIO_WritePin(tmp.Mode2Port, tmp.Mode2Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(tmp.ResetPort, tmp.ResetPin, GPIO_PIN_SET);
 
-	HAL_GPIO_WritePin(tmp.EPort, tmp.EPin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(tmp.EPort, tmp.EPin, GPIO_PIN_RESET);
 	return tmp;
 }
 
 void stepper_set_destination(STEPPER* stepper, int32_t pos)
 {
-	if(pos > 6000) pos = 6000;
+
+	pos = 58 * pos;
+	if(pos > 5800) pos = 5800;
 
 	stepper->destination=pos;
 	if(pos>stepper->position)
@@ -75,6 +78,9 @@ void stepper_set_destination(STEPPER* stepper, int32_t pos)
 
 void stepper_set_speed(STEPPER* stepper, int16_t speed)
 {
+	if(speed < 10) speed = 10;
+	else if(speed > 100) speed = 100;
+	speed = (int16_t)(143 - 1.41 * speed);
 	stepper->speed=speed;
 	__HAL_TIM_SET_PRESCALER(stepper->Timer, stepper->speed);
 }
@@ -83,7 +89,7 @@ void stepper_set_speed(STEPPER* stepper, int16_t speed)
 void stepper_proceed(STEPPER* stepper)
 {
 	stepper->is_working=1;
-	HAL_GPIO_WritePin(stepper->EPort, stepper->EPin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(stepper->EPort, stepper->EPin, GPIO_PIN_SET);
 	HAL_TIM_PWM_Start(stepper->Timer, stepper->Channel);
 	HAL_TIM_Base_Start_IT(stepper->Timer);
 }
