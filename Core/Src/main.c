@@ -29,7 +29,6 @@
 #include "flick.h"
 #include "lsm6ds33_reg.h"
 #include "math.h"
-#include "lis3mdl.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -178,8 +177,6 @@ int main(void)
   HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL9_XL, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
   i2c2_buf[0] = 0x10;		// 13 Hz ODR, +/- 2 g
   HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL1_XL, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
-
-
 
   /* USER CODE END 2 */
 
