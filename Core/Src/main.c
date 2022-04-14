@@ -29,6 +29,7 @@
 #include "flick.h"
 #include "lsm6ds33_reg.h"
 #include "math.h"
+#include "mylis3dml.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -160,7 +161,7 @@ int main(void)
   /* IMU */
   uint8_t i2c2_buf[10];
   HAL_I2C_Mem_Read(&hi2c2, ACC_GYRO_ADDR, WHO_AM_I, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
-  HAL_I2C_Mem_Read(&hi2c2, 0x1e<<1, 0x0f, I2C_MEMADD_SIZE_8BIT, i2c2_buf+1, 1, 1);
+  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_WHO_AM_I_REG, I2C_MEMADD_SIZE_8BIT, i2c2_buf+1, 1, 1);
 
   char str[40];
   sprintf(str, "Who? A/G:%02x M:%02x", i2c2_buf[0], i2c2_buf[1]);
@@ -177,6 +178,20 @@ int main(void)
   HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL9_XL, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
   i2c2_buf[0] = 0x10;		// 13 Hz ODR, +/- 2 g
   HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL1_XL, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
+
+
+  /* Magneto */
+  /* cfg magneto */
+    i2c2_buf[0] = 0x00;
+    HAL_I2C_Mem_Write(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_CTRL_REG2, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
+    i2c2_buf[0] = 0xFC;
+    HAL_I2C_Mem_Write(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_CTRL_REG1, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
+    i2c2_buf[0] = 0x0C;
+    HAL_I2C_Mem_Write(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_CTRL_REG4, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
+    i2c2_buf[0] = 0x00;
+    HAL_I2C_Mem_Write(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_CTRL_REG3, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
+
+
 
   /* USER CODE END 2 */
 
@@ -238,6 +253,33 @@ int main(void)
 				  (int8_t)*(i2c2_buf+1), (int8_t)*(i2c2_buf+3), (int8_t)*(i2c2_buf+5));
 		  BSP_LCD_DisplayStringAtLine(11, (uint8_t *) str);
 	  }
+	  	  uint8_t magneto_status;
+	  	  int16_t magneto_z, magneto_x, magneto_y;
+	  	  uint8_t *p_magneto_x = (uint8_t*) &magneto_x;
+	  	  uint8_t *p_magneto_y = (uint8_t*) &magneto_y;
+	  	  uint8_t *p_magneto_z = (uint8_t*) &magneto_z;
+
+		  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_STATUS_REG, I2C_MEMADD_SIZE_8BIT, &magneto_status, 1, 1);
+
+		  if (magneto_status & (1 << 0)){
+			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTZ_L, I2C_MEMADD_SIZE_8BIT, p_magneto_x, 1, 1);
+			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTZ_H, I2C_MEMADD_SIZE_8BIT, p_magneto_x+1, 1, 1);
+	 	 }
+		  if (magneto_status & (1 << 1)){
+		  			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTY_L, I2C_MEMADD_SIZE_8BIT, p_magneto_y, 1, 1);
+		  			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTY_H, I2C_MEMADD_SIZE_8BIT, p_magneto_y+1, 1, 1);
+		  	 	 }
+		  if (magneto_status & (1 << 2)){
+		  			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTX_L, I2C_MEMADD_SIZE_8BIT, p_magneto_z, 1, 1);
+		  			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTX_H, I2C_MEMADD_SIZE_8BIT, p_magneto_z+1, 1, 1);
+		  	 	 }
+
+		  sprintf(str, "x=%d y=%d  ", magneto_x, magneto_y);
+		  BSP_LCD_DisplayStringAtLine(5, (uint8_t *) str);
+
+		  sprintf(str, "%f  ", 180/3.14*atan((float)magneto_x/magneto_y));
+		  BSP_LCD_DisplayStringAtLine(6, (uint8_t *) str);
+
 
 	  HAL_Delay(100);
 
@@ -245,7 +287,7 @@ int main(void)
 	  {
 		  float cnt = (float)__HAL_TIM_GetCounter(&htim4) / 10;
 
-		  uint8_t str[20];
+		  uint8_t str[80];
 		  sprintf((char*)str, "mot %.1f\r", cnt);
 		  BSP_LCD_DisplayStringAtLine(5, (uint8_t *) str);
 
