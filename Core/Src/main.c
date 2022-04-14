@@ -240,6 +240,16 @@ int main(void)
 	  BSP_LCD_DisplayStringAtLine(4, (uint8_t *) wyswietl);
 			  }
 
+			  if(interaction == FLICK_TOUCH_GORA)
+			  {
+	char wyswietl[]="dotkniete na gorze";
+	  BSP_LCD_DisplayStringAtLine(4, (uint8_t *) wyswietl);
+			  }
+	  else{
+			char wyswietl[]="";
+	BSP_LCD_DisplayStringAtLine(4, (uint8_t *) wyswietl);
+	  }
+
 
 	  if ((uint8_t) gesture == 2)
 		  HAL_GPIO_TogglePin(MOT_DIR1_GPIO_Port, MOT_DIR1_Pin);
