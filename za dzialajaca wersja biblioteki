@@ -1,0 +1,47 @@
+[33mcommit 1cd976b055bde4dfa6ac7d0ba64ffc7c7630a7df[m[33m ([m[1;36mHEAD -> [m[1;32mstepper[m[33m, [m[1;31morigin/stepper[m[33m)[m
+Author: MatDaw <mateuszdaw9@gmail.com>
+Date:   Wed Apr 13 17:59:44 2022 +0200
+
+    Dodana opcja wylaczania silnika gdy nie pracuje (do przetestowania)
+
+[33mcommit c0dec6d3d1475ab297313fdd703897b49bd2d791[m
+Author: Gotfryd3 <102725179+Gotfryd3@users.noreply.github.com>
+Date:   Thu Apr 7 09:55:12 2022 +0200
+
+    pierwsza dzialajaca wersja biblioteki
+
+[33mcommit a36e9880bf4ea1f5d0d818b89057fa8d3eee68c7[m
+Author: MatDaw <mateuszdaw9@gmail.com>
+Date:   Thu Apr 7 08:34:39 2022 +0200
+
+    komit do testow
+
+[33mcommit 03330c7920812ac4c763831d738e2e776ec33dbf[m
+Author: MatDaw <mateuszdaw9@gmail.com>
+Date:   Wed Apr 6 19:37:52 2022 +0200
+
+    pierwsza wersja biblioteki do przetestowania
+
+[33mcommit a1f30aaa4ba15f20f405dc5e57ee39870a6c7ae0[m
+Author: MatDaw <mateuszdaw9@gmail.com>
+Date:   Thu Mar 31 10:00:01 2022 +0200
+
+    utworzenie biblioteki i rozpoczeta inicjalizacja
+
+[33mcommit d7ec12d7cf6826d945d77080165ed8831cfd30bf[m
+Author: MatDaw <mateuszdaw9@gmail.com>
+Date:   Thu Mar 31 09:26:25 2022 +0200
+
+    aktualizacja pliku ioc
+
+[33mcommit 11b4ce81984f190ad85823ace182217ea10d5828[m
+Author: MatDaw <mateuszdaw9@gmail.com>
+Date:   Thu Mar 31 08:54:09 2022 +0200
+
+    drugi komit
+
+[33mcommit 78f605b17e570ade571f7d695605cc8195656cf3[m
+Author: MatDaw <mateuszdaw9@gmail.com>
+Date:   Wed Mar 23 22:42:22 2022 +0100
+
+    pierwszy komit
