@@ -74,6 +74,7 @@ void stepper_set_destination(STEPPER* stepper, int32_t pos, uint8_t state)
 		stepper->destination[1]=2*(pos-stepper->position)/3+stepper->position;
 		stepper->destination[2]=(pos-stepper->position)/3+stepper->position;
 		stepper->speed=stepper->speed/2;
+		__HAL_TIM_SET_PRESCALER(stepper->Timer, stepper->speed);
 		stepper->state=2;
 
 	}
