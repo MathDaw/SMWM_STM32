@@ -677,7 +677,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 				HAL_TIM_Base_Stop_IT(stepper.Timer);
 				stepper.is_working=0;
 				stepper.state=0;
-				stepper.speed=stepper.speed/2;
+				stepper.speed=stepper.speed*2;
 				__HAL_TIM_SET_PRESCALER(stepper.Timer, stepper.speed);
 			}
 		}
