@@ -219,13 +219,13 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  stepper_set_destination(&stepper,20000);
+	  stepper_set_destination(&stepper,20000,1);
 	  stepper_set_speed(&stepper, 2);
 	  stepper_proceed(&stepper);
 	  while(stepper.is_working)
 	  {}
 	  HAL_Delay(500);
-	  stepper_set_destination(&stepper,0);
+	  stepper_set_destination(&stepper,0,1);
 	  stepper_set_speed(&stepper, 1);
 	  stepper_proceed(&stepper);
 	  while(stepper.is_working)
@@ -649,12 +649,37 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 	if(htim==stepper.Timer)
 	{
 		stepper.position+=stepper.direction;
-		if(stepper.position==stepper.destination)
+		if(stepper.state==1)
 		{
-			HAL_TIM_PWM_Stop(stepper.Timer, stepper.Channel);
-			HAL_TIM_Base_Stop_IT(stepper.Timer);
-			HAL_GPIO_WritePin(stepper.EPort, stepper.EPin, GPIO_PIN_SET);
-			stepper.is_working=0;
+			if(stepper.position==stepper.destination[0])
+			{
+				HAL_TIM_PWM_Stop(stepper.Timer, stepper.Channel);
+				HAL_TIM_Base_Stop_IT(stepper.Timer);
+				stepper.is_working=0;
+				stepper.state=0;
+			}
+		}
+		else if(stepper.state==2)
+		{
+			if(stepper.position==stepper.destination[2])
+			{
+				stepper.speed=stepper.speed*2;
+				__HAL_TIM_SET_PRESCALER(stepper.Timer, stepper.speed);
+			}
+			else if(stepper.position==stepper.destination[1])
+			{
+				stepper.speed=stepper.speed/2;
+				__HAL_TIM_SET_PRESCALER(stepper.Timer, stepper.speed);
+			}
+			else
+			{
+				HAL_TIM_PWM_Stop(stepper.Timer, stepper.Channel);
+				HAL_TIM_Base_Stop_IT(stepper.Timer);
+				stepper.is_working=0;
+				stepper.state=0;
+				stepper.speed=stepper.speed/2;
+				__HAL_TIM_SET_PRESCALER(stepper.Timer, stepper.speed);
+			}
 		}
 	}
 }

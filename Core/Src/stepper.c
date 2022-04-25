@@ -40,9 +40,12 @@ STEPPER stepper_inizialize(
 	tmp.Mode2Port=Mode2Port;
 	tmp.position=0;
 	tmp.direction=1; //1 - do przodu, -1 - do tyłu
-	tmp.destination=0;
+	tmp.destination[0]=0;
+	tmp.destination[1]=0;
+	tmp.destination[2]=0;
 	tmp.is_working=0;
 	tmp.speed=80;
+	tmp.state=0;
 	//Inicjalizacja pracy zegara
 	__HAL_TIM_SET_PRESCALER(Timer,tmp.speed);
 	HAL_GPIO_WritePin(tmp.DirPort, tmp.DirPin, 1);
@@ -56,11 +59,24 @@ STEPPER stepper_inizialize(
 	return tmp;
 }
 
-void stepper_set_destination(STEPPER* stepper, int32_t pos)
+void stepper_set_destination(STEPPER* stepper, int32_t pos, uint8_t state)
 {
 	if(pos > 6000) pos = 6000;
 
-	stepper->destination=pos;
+	if(state==1)
+	{
+		stepper->destination[0]=pos;
+		stepper->state=1;
+	}
+	else if(state==2)
+	{
+		stepper->destination[0]=pos;
+		stepper->destination[1]=2*(pos-stepper->position)/3+stepper->position;
+		stepper->destination[2]=(pos-stepper->position)/3+stepper->position;
+		stepper->state=2;
+
+	}
+
 	if(pos>stepper->position)
 	{
 		stepper->direction=1;
@@ -78,7 +94,6 @@ void stepper_set_speed(STEPPER* stepper, int16_t speed)
 	stepper->speed=speed;
 	__HAL_TIM_SET_PRESCALER(stepper->Timer, stepper->speed);
 }
-
 
 void stepper_proceed(STEPPER* stepper)
 {

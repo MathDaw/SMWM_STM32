@@ -10,6 +10,10 @@
   */
 
 #include<main.h>
+#define STEPPER_STAY 0;
+#define STEPPER_RECTANGLE 1;
+#define STEPPER_TRAPEZE 2;
+
 
 typedef struct {
 	//pins
@@ -30,10 +34,11 @@ typedef struct {
 	int32_t Channel;
 	//state
 	int32_t position;
-	int32_t destination;
+	int32_t destination[3];
 	uint8_t is_working;
 	int8_t direction;
 	uint16_t speed;
+	uint8_t state;
 } STEPPER;
 
 STEPPER stepper_inizialize(
@@ -45,7 +50,7 @@ STEPPER stepper_inizialize(
 		GPIO_TypeDef* Mode2Port,uint16_t Mode2Pin,
 		TIM_HandleTypeDef* Timer,int32_t Channel);
 
-void stepper_set_destination(STEPPER* stepper, int32_t pos);
+void stepper_set_destination(STEPPER* stepper, int32_t pos, uint8_t state);
 
 void stepper_proceed(STEPPER* stepper);
 
