@@ -17,7 +17,8 @@
   */
 
 #include "lcd.h"
-
+#include "math.h"
+#include "stm32_adafruit_lcd.h"
 /******************************************************************************
                             BUS OPERATIONS
 *******************************************************************************/
@@ -187,6 +188,17 @@ void LCD_IO_WriteMultipleData(uint8_t *pData, uint32_t Size)
   /* Deselect : Chip Select high */
   LCD_CS_HIGH();
 }
+void LCD_PrintDirection(uint8_t pos,uint8_t x_center,uint8_t y_center,uint8_t radius,uint16_t line_color)
+{
+	uint16_t last_color = BSP_LCD_GetTextColor();
+	BSP_LCD_SetTextColor(line_color);
+
+	BSP_LCD_DrawPixel(x_center, y_center, line_color);
+	int angle = pos;	// ustalić format wejściowy (kat w radianach)
+	BSP_LCD_DrawLine(x_center, y_center, (sin(angle)*radius) + x_center, (cos(angle)*radius) + y_center);
+
+	BSP_LCD_SetTextColor(last_color);
+}
 
 /**
   * @brief  Blocking delay in ms.
@@ -199,4 +211,12 @@ void LCD_IO_WriteMultipleData(uint8_t *pData, uint32_t Size)
 void LCD_Delay(uint32_t Delay)
 {
   HAL_Delay(Delay);
+}
+
+void MENU (void) //Wyświetlanie 4 opcji wybor
+{
+	sprintf(str, "pos: %02d cnt: %02d", airwheel.position, airwheel.count);
+	BSP_LCD_DisplayStringAtLine(4, (uint8_t *) str);
+}
+
 }

@@ -177,14 +177,14 @@ int main(void)
   HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL9_XL, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
   i2c2_buf[0] = 0x10;		// 13 Hz ODR, +/- 2 g
   HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL1_XL, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
-  int srodekx = 64;
-  int srodeky=80;
-  int promien = 20;
-  int znacznik = 3;
-  BSP_LCD_DrawCircle(srodekx, srodeky, promien);
-  BSP_LCD_FillCircle(srodekx, srodeky, znacznik);
-  BSP_LCD_FillCircle(aktx, akty, znacznik);
-  BSP_LCD_DrawLine(srodeky, srodeky, aktx, akty);
+//  int srodekx = 64;
+//  int srodeky=80;
+//  int promien = 20;
+//  int znacznik = 3;
+//  BSP_LCD_DrawCircle(srodekx, srodeky, promien);
+//  BSP_LCD_FillCircle(srodekx, srodeky, znacznik);
+//  BSP_LCD_FillCircle(aktx, akty, znacznik);
+//  BSP_LCD_DrawLine(srodeky, srodeky, aktx, akty);
 
 
   /* USER CODE END 2 */
@@ -206,9 +206,9 @@ int main(void)
 	  if(airwheel.new_data == FLICK_NEW_DATA)
 	  {
 
-		  BSP_LCD_Clear(LCD_COLOR_YELLOW);
-		  BSP_LCD_DrawCircle(srodekx, srodeky, promien);
-		  BSP_LCD_FillCircle(64, 80, 12);
+//		  BSP_LCD_Clear(LCD_COLOR_YELLOW);
+//		  BSP_LCD_DrawCircle(srodekx, srodeky, promien);
+//		  BSP_LCD_FillCircle(64, 80, 12);
 
 		  sprintf(str, "pos: %02d cnt: %02d", airwheel.position, airwheel.count);
 		  BSP_LCD_DisplayStringAtLine(4, (uint8_t *) str);
