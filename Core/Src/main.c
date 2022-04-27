@@ -29,6 +29,7 @@
 #include "flick.h"
 #include "lsm6ds33_reg.h"
 #include "math.h"
+#include "lcd.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -77,21 +78,23 @@ static void MX_I2C1_Init(void);
 static void MX_I2C2_Init(void);
 /* USER CODE BEGIN PFP */
 
+void StInit(void);
+void StMenu(void);
+void StAzimuth(void);
+void StRange(void);
+void StEdit (void);
+void StSpeed (void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+void (*state_array[])() = {StInit, StMenu, StAzimuth,StRange,StEdit};
+/* an enumerated type used for indexing the state_array */
+typedef enum {ST_INIT, ST_MENU, ST_AZIMUTH, ST_RANGE, ST_EDIT,ST_SPEED} state_name_t;
+state_name_t current_state;
 
-void Pulse_Counter(void)
-{
-	if (pulse_cnt > 0) pulse_cnt--;
-	else
-	{
-		HAL_TIM_PWM_Stop_IT(&htim2, TIM_CHANNEL_2);
-		__HAL_TIM_SET_COUNTER(&htim2, 2000);
-	}
-}
 
 /* USER CODE END 0 */
 
@@ -111,7 +114,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  current_state = ST_INIT;
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -131,60 +134,8 @@ int main(void)
   MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
 
-  /* Stepstick */
-  HAL_TIM_Base_Start(&htim4);
 
-  HAL_GPIO_WritePin(MOT_RESET_GPIO_Port, MOT_RESET_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(MOT_MODE1_GPIO_Port, MOT_MODE1_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(MOT_MODE2_GPIO_Port, MOT_MODE2_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(MOT_RESET_GPIO_Port, MOT_RESET_Pin, GPIO_PIN_SET);
 
-  /* LCD */
-  BSP_LCD_Init();
-  BSP_LCD_DisplayOn();
-
-  BSP_LCD_DisplayStringAtLine(2, (uint8_t *) "testTestTest");
-  HAL_Delay(1000);
-  BSP_LCD_Clear(LCD_COLOR_YELLOW);
-  HAL_Delay(1000);
-  BSP_LCD_DisplayStringAtLine(3, (uint8_t *) "test");
-  HAL_Delay(1000);
-  /* Sensors */
-  HAL_I2C_Init(&hi2c1);
-  HAL_I2C_Init(&hi2c2);
-
-  /* Flick */
-  flick_reset();
-  flick_set_param(0x90, 0x20, 0x20);
-
-  /* IMU */
-  uint8_t i2c2_buf[10];
-  HAL_I2C_Mem_Read(&hi2c2, ACC_GYRO_ADDR, WHO_AM_I, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
-  HAL_I2C_Mem_Read(&hi2c2, 0x1e<<1, 0x0f, I2C_MEMADD_SIZE_8BIT, i2c2_buf+1, 1, 1);
-
-  char str[40];
-  sprintf(str, "Who? A/G:%02x M:%02x", i2c2_buf[0], i2c2_buf[1]);
-  BSP_LCD_DisplayStringAtLine(10, (uint8_t *) str);
-
-  /* cfg gyro */
-  i2c2_buf[0] = 0x38;		// enable X,Y,Z axes
-  HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL10_C, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
-  i2c2_buf[0] = 0x14;		// 13 Hz ODR, 500 dps
-  HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL2_G, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
-
-  // cfg acc
-  i2c2_buf[0] = 0x38;		// enable X,Y,Z axes
-  HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL9_XL, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
-  i2c2_buf[0] = 0x10;		// 13 Hz ODR, +/- 2 g
-  HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL1_XL, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
-//  int srodekx = 64;
-//  int srodeky=80;
-//  int promien = 20;
-//  int znacznik = 3;
-//  BSP_LCD_DrawCircle(srodekx, srodeky, promien);
-//  BSP_LCD_FillCircle(srodekx, srodeky, znacznik);
-//  BSP_LCD_FillCircle(aktx, akty, znacznik);
-//  BSP_LCD_DrawLine(srodeky, srodeky, aktx, akty);
 
 
   /* USER CODE END 2 */
@@ -197,78 +148,12 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  uint32_t gesture, touch;
-	  airwheel_data_t airwheel;
-	  char str[20];
+	  state_array[current_state]();
 
-	  flick_poll_data(&gesture, &touch, &airwheel);
-
-	  if(airwheel.new_data == FLICK_NEW_DATA)
-	  {
-
-//		  BSP_LCD_Clear(LCD_COLOR_YELLOW);
-//		  BSP_LCD_DrawCircle(srodekx, srodeky, promien);
-//		  BSP_LCD_FillCircle(64, 80, 12);
-
-		  sprintf(str, "pos: %02d cnt: %02d", airwheel.position, airwheel.count);
-		  BSP_LCD_DisplayStringAtLine(4, (uint8_t *) str);
-
-		  uint8_t circy = 110 - 12 * sin(2*3.1416*airwheel.position/32);
-		  uint8_t circx = 50 - 12 * cos(2*3.1416*airwheel.position/32);
-
-		  BSP_LCD_FillCircle(circx, circy, 3);
-
-		  airwheel.new_data = FLICK_NO_DATA;
-	  }
-
-//	  sprintf(str, "g:%lx             ", gesture);
-//	  BSP_LCD_DisplayStringAtLine(1, (uint8_t *) str);
-//	  sprintf(str, "gest:%d           ", (uint8_t) gesture);
-//	  BSP_LCD_DisplayStringAtLine(2, (uint8_t *) str);
-//	  sprintf(str, "t:%lx          	  ", touch);
-//	  BSP_LCD_DisplayStringAtLine(3, (uint8_t *) str);
-
-	  if ((uint8_t) gesture == 2)
-		  HAL_GPIO_TogglePin(MOT_DIR1_GPIO_Port, MOT_DIR1_Pin);
-
-	  /* IMU */
-	  HAL_I2C_Mem_Read(&hi2c2, ACC_GYRO_ADDR, STATUS_REG, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
-	  uint8_t tmp_stat = i2c2_buf[0];
-	  if (tmp_stat & SR_XLDA)
-	  {
-		  HAL_I2C_Mem_Read(&hi2c2, ACC_GYRO_ADDR, OUTX_L_XL, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 6, 1);
-		  sprintf(str, "acc %+4hi%+4hi%+4hi",
-				  (int8_t)*(i2c2_buf+1), (int8_t)*(i2c2_buf+3), (int8_t)*(i2c2_buf+5));
-		  BSP_LCD_DisplayStringAtLine(12, (uint8_t *) str);
-	  }
-	  if (tmp_stat & SR_GDA)
-	  {
-		  HAL_I2C_Mem_Read(&hi2c2, ACC_GYRO_ADDR, OUTX_L_G, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 6, 1);
-		  sprintf(str, "gyro %+4hi%+4hi%+4hi",
-				  (int8_t)*(i2c2_buf+1), (int8_t)*(i2c2_buf+3), (int8_t)*(i2c2_buf+5));
-		  BSP_LCD_DisplayStringAtLine(11, (uint8_t *) str);
-	  }
-
-	  HAL_Delay(100);
-
-	  if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
-	  {
-		  float cnt = (float)__HAL_TIM_GetCounter(&htim4) / 10;
-
-		  uint8_t str[20];
-		  sprintf((char*)str, "mot %.1f\r", cnt);
-		  BSP_LCD_DisplayStringAtLine(5, (uint8_t *) str);
-
-		  pulse_cnt = 500;
-		  HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_2);
-	  }
   }
   /* USER CODE END 3 */
 }
-void rysuj(void)
-{
-	BSP_LCD_DrawCircle(50, 50, 10);
-}
+
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -688,6 +573,162 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void StInit(void)
+{
+	/* Stepstick */
+	  HAL_TIM_Base_Start(&htim4);
+
+	  HAL_GPIO_WritePin(MOT_RESET_GPIO_Port, MOT_RESET_Pin, GPIO_PIN_RESET);
+	  HAL_GPIO_WritePin(MOT_MODE1_GPIO_Port, MOT_MODE1_Pin, GPIO_PIN_RESET);
+	  HAL_GPIO_WritePin(MOT_MODE2_GPIO_Port, MOT_MODE2_Pin, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(MOT_RESET_GPIO_Port, MOT_RESET_Pin, GPIO_PIN_SET);
+
+	  /* LCD */
+	  BSP_LCD_Init();
+	  BSP_LCD_DisplayOn();
+
+//	  BSP_LCD_DisplayStringAtLine(2, (uint8_t *) "testTestTest");
+//	  HAL_Delay(1000);
+//	  BSP_LCD_Clear(LCD_COLOR_YELLOW);
+//	  HAL_Delay(1000);
+//	  BSP_LCD_DisplayStringAtLine(3, (uint8_t *) "test");
+//	  HAL_Delay(1000);
+	  /* Sensors */
+	  HAL_I2C_Init(&hi2c1);
+	  HAL_I2C_Init(&hi2c2);
+
+	  /* Flick */
+	  flick_reset();
+	  flick_set_param(0x90, 0x20, 0x20);
+
+	  /* IMU */
+	  uint8_t i2c2_buf[10];
+	  HAL_I2C_Mem_Read(&hi2c2, ACC_GYRO_ADDR, WHO_AM_I, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
+	  HAL_I2C_Mem_Read(&hi2c2, 0x1e<<1, 0x0f, I2C_MEMADD_SIZE_8BIT, i2c2_buf+1, 1, 1);
+
+	  char str[40];
+	  sprintf(str, "Who? A/G:%02x M:%02x", i2c2_buf[0], i2c2_buf[1]);
+	  BSP_LCD_DisplayStringAtLine(10, (uint8_t *) str);
+
+	  /* cfg gyro */
+	  i2c2_buf[0] = 0x38;		// enable X,Y,Z axes
+	  HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL10_C, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
+	  i2c2_buf[0] = 0x14;		// 13 Hz ODR, 500 dps
+	  HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL2_G, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
+
+	  // cfg acc
+	  i2c2_buf[0] = 0x38;		// enable X,Y,Z axes
+	  HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL9_XL, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
+	  i2c2_buf[0] = 0x10;		// 13 Hz ODR, +/- 2 g
+	  HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL1_XL, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
+
+	  current_state = ST_MENU;
+}
+
+void StMenu(void)
+{
+	char str[40];
+	BSP_LCD_Clear(LCD_COLOR_WHITE);
+
+	sprintf(str, "MENU");
+//	str = "MENU";
+	BSP_LCD_DisplayStringAt(64, 5, (uint8_t *) str, CENTER_MODE);
+	sprintf(str, "Wybierz opcje:");
+//	str = "Wybierz opcje:";
+	BSP_LCD_DisplayStringAt(64, 15, (uint8_t *) str, CENTER_MODE);
+	sprintf(str, "Wybor trybu");
+//	str = "Wybor trybu";
+	BSP_LCD_DisplayStringAt(5, 80, (uint8_t *) str, LEFT_MODE);
+	sprintf(str, "Ustaw predkosc");
+//	str = "Ustaw Predkosc";
+	BSP_LCD_DisplayStringAt(123, 80, (uint8_t *) str, RIGHT_MODE);
+	sprintf(str, "Aktywuj");
+//	str = "Aktywuj";
+	BSP_LCD_DisplayStringAt(64, 155, (uint8_t *) str, CENTER_MODE);
+
+	// Odczyt gestu flick
+
+	// Przejście do odpowiedniego stanu
+
+}
+void StAzimuth(void)
+{
+	char str[40];
+	BSP_LCD_Clear(LCD_COLOR_WHITE);
+	uint8_t angle;
+	sprintf(str, "Utrzymanie azymutu");
+	BSP_LCD_DisplayStringAt(64, 15, (uint8_t *) str, CENTER_MODE);
+
+	angle = 0;	// kat testowy
+	LCD_PrintDirection(angle, 64, 80, 50, LCD_COLOR_RED);//aktualny azymut
+	//dodać zadany przez użytkownika azymut
+
+	sprintf(str, "Powrot do MENU");
+	BSP_LCD_DisplayStringAt(64, 155, (uint8_t *) str, CENTER_MODE);
+
+	// Przejść do stanu Menu
+
+}
+void StRange(void)
+{
+	char str[40];
+	BSP_LCD_Clear(LCD_COLOR_WHITE);
+	uint8_t angle;
+	sprintf(str, "Zakres");
+	BSP_LCD_DisplayStringAt(64, 15, (uint8_t *) str, CENTER_MODE);
+
+	angle = 0;	// kat testowy
+	LCD_PrintDirection(angle, 64, 80, 50, LCD_COLOR_RED);//aktualny azymut
+	//dodać zadany przez użytkownika dolny ogranicznik
+	//dodać zadany przez użytkownika gorny ogranicznik
+	sprintf(str, "Powrot do MENU");
+	BSP_LCD_DisplayStringAt(64, 155, (uint8_t *) str, CENTER_MODE);
+
+	// Przejść do stanu Menu
+
+}
+void StEdit (void)
+{
+	char str[40];
+	BSP_LCD_Clear(LCD_COLOR_WHITE);
+
+	sprintf(str, "Wybierz tryb");
+	BSP_LCD_DisplayStringAt(64, 15, (uint8_t *) str, CENTER_MODE);
+
+	// odczyt z flick
+
+	sprintf(str, "Podaj dolna wartosc ograniczajaca");
+	BSP_LCD_DisplayStringAt(64, 15, (uint8_t *) str, CENTER_MODE);
+
+	// odczyt z flick
+
+	sprintf(str, "Podaj gorna wartosc ograniczajaca");
+	BSP_LCD_DisplayStringAt(64, 15, (uint8_t *) str, CENTER_MODE);
+
+	// odczyt z flick
+
+	sprintf(str, "Zatwierdz");
+	BSP_LCD_DisplayStringAt(64, 155, (uint8_t *) str, CENTER_MODE);
+	// zatwierdz kliknieciem
+
+	current_state = ST_MENU;
+}
+void StSpeed (void)
+{
+	char str[40];
+	BSP_LCD_Clear(LCD_COLOR_WHITE);
+
+	sprintf(str, "Podaj prędkosc silnika");
+	BSP_LCD_DisplayStringAt(64, 15, (uint8_t *) str, CENTER_MODE);
+
+	// odczyt z flick
+
+	sprintf(str, "Zatwierdz");
+	BSP_LCD_DisplayStringAt(64, 155, (uint8_t *) str, CENTER_MODE);
+	// zatwierdz kliknieciem
+
+	current_state = ST_MENU;
+}
 
 /* USER CODE END 4 */
 

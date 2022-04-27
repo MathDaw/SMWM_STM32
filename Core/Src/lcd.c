@@ -213,10 +213,3 @@ void LCD_Delay(uint32_t Delay)
   HAL_Delay(Delay);
 }
 
-void MENU (void) //Wyświetlanie 4 opcji wybor
-{
-	sprintf(str, "pos: %02d cnt: %02d", airwheel.position, airwheel.count);
-	BSP_LCD_DisplayStringAtLine(4, (uint8_t *) str);
-}
-
-}
