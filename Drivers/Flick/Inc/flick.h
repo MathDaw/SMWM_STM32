@@ -165,6 +165,19 @@ void flick_servo_value_change(int* servo_speed,int value_change);
 
 void flick_set_speed(int* servo_speed, airwheel_data_t airwheel,uint8_t* rotation_cnt);
 
+/**
+ * @brief This function maps airwheel data to desired position
+ *
+ * Function changes value of set_position variable to range 0-256 based on airwheel data
+ *
+ * @param set_position	the 8-bit desired position of IMU module further realized by motor
+ * @param airwheel		the @b airwheel_data_t structure, updated according to the received data (if any) received from flick_poll_data
+ */
+
+void flick_get_position(uint8_t* set_position, airwheel_data_t airwheel);
+
+
+
 
 
 

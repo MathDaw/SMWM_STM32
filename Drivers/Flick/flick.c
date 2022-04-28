@@ -250,3 +250,12 @@ void flick_set_speed(int* servo_speed, airwheel_data_t airwheel,uint8_t* rotatio
 	return;
 
 }
+
+void flick_get_position(uint8_t* set_position, airwheel_data_t airwheel){
+
+	set_position=(airwheel.count)*32+airwheel.position;
+
+	return;
+}
+
+
