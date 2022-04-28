@@ -627,29 +627,43 @@ void StInit(void)
 
 void StMenu(void)
 {
+	uint32_t gesture, touch;
+	airwheel_data_t airwheel;
+
+	flick_poll_data(&gesture, &touch, &airwheel);
+
 	char str[40];
 	BSP_LCD_Clear(LCD_COLOR_WHITE);
 
 	sprintf(str, "MENU");
-//	str = "MENU";
-	BSP_LCD_DisplayStringAt(64, 5, (uint8_t *) str, CENTER_MODE);
+
+	BSP_LCD_DisplayStringAt(0, 1, (uint8_t *) str, CENTER_MODE);
 	sprintf(str, "Wybierz opcje:");
-//	str = "Wybierz opcje:";
-	BSP_LCD_DisplayStringAt(64, 15, (uint8_t *) str, CENTER_MODE);
-	sprintf(str, "Wybor trybu");
-//	str = "Wybor trybu";
-	BSP_LCD_DisplayStringAt(5, 80, (uint8_t *) str, LEFT_MODE);
-	sprintf(str, "Ustaw predkosc");
-//	str = "Ustaw Predkosc";
-	BSP_LCD_DisplayStringAt(123, 80, (uint8_t *) str, RIGHT_MODE);
+
+	BSP_LCD_DisplayStringAt(0, 15, (uint8_t *) str, CENTER_MODE);
+	sprintf(str, "<- Wybor trybu");
+
+	BSP_LCD_DisplayStringAt(0, 70, (uint8_t *) str, LEFT_MODE);
+	sprintf(str, "Ustaw predkosc ->");
+
+	BSP_LCD_DisplayStringAt(0, 90, (uint8_t *) str, RIGHT_MODE);
 	sprintf(str, "Aktywuj");
-//	str = "Aktywuj";
-	BSP_LCD_DisplayStringAt(64, 155, (uint8_t *) str, CENTER_MODE);
+
+	BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
+	HAL_Delay(500);
 
 	// Odczyt gestu flick
+	flick_interaction_t interaction=flick_get_interaction(gesture,touch,airwheel);
 
 	// Przejście do odpowiedniego stanu
+	if(interaction == FLICK_TOUCH_LEFT)
+	{
 
+	}
+	if(interaction == FLICK_TOUCH_RIGHT)
+	{
+		;
+	}
 }
 void StAzimuth(void)
 {
