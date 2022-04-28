@@ -79,6 +79,7 @@ SPI_HandleTypeDef *hnucleo_Spi = &hspi2;
 int pulse_cnt;
 int servo_speed=50;
 uint8_t rotation_cnt=0;
+uint8_t position = 0;
 
 /* USER CODE END PV */
 
@@ -210,6 +211,8 @@ int main(void)
 
 	  flick_poll_data(&gesture, &touch, &airwheel);
 
+	  flick_set_speed(&servo_speed, airwheel,&rotation_cnt);
+
 	  if(airwheel.new_data == FLICK_NEW_DATA)
 	  {
 	  	  BSP_LCD_Clear(LCD_COLOR_YELLOW);
@@ -223,6 +226,18 @@ int main(void)
 		  uint8_t circx = 50 - 12 * cos(2*3.1416*airwheel.position/32);
 
 		  BSP_LCD_FillCircle(circx, circy, 3);
+
+		  flick_set_speed(&servo_speed, airwheel,&rotation_cnt);
+		  sprintf(str, "sp:%d             ", servo_speed);
+
+		  BSP_LCD_DisplayStringAtLine(5, (uint8_t *) str);
+
+
+		  flick_get_position(&position, airwheel);
+
+		  sprintf(str, "ps:%d             ", position);
+
+		  BSP_LCD_DisplayStringAtLine(6, (uint8_t *) str);
 
 		  airwheel.new_data = FLICK_NO_DATA;
 	  }
@@ -254,6 +269,7 @@ int main(void)
 	  }
 
 */
+
 	  if ((uint8_t) gesture == 2)
 		  HAL_GPIO_TogglePin(MOT_DIR1_GPIO_Port, MOT_DIR1_Pin);
 
