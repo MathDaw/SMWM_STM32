@@ -53,6 +53,23 @@ typedef enum {
 	FLICK_MSG_NO_MSG          /**< 4 */
 } flick_msg_t;
 
+
+
+/**
+ * @brief Type of interaction detected by Flick
+ */
+
+typedef enum {
+	FLICK_NO_INTERACTION,
+	FLICK_TOUCH_SRODEK,
+	FLICK_TOUCH_GORA,
+	FLICK_TOUCH_DOL,
+	FLICK_TOUCH_PRAWO,
+	FLICK_TOUCH_LEWO,
+	FLICK_SWIPE_PRAWO,
+	FLICK_SWIPE_LEWO
+} flick_interaction_t;
+
 /**
  * @brief Data type for reporting availability of new data
  */
@@ -105,8 +122,63 @@ void flick_set_param(uint16_t param_ID, uint32_t arg0, uint32_t arg1);
  */
 flick_data_t flick_poll_data(uint32_t* gest_info, uint32_t* touch_info, airwheel_data_t* airwheel);
 
+
+
+
+
 /**
- * @}
+ * @brief This function gets type of interaction from polled data
+ *
+ * Function returns first recognized interaction from a set of defined interactions
+ * Prioritizes touch over gestures
+ *
+ * @param gest_info		the 32-bit gesture information (GestureInfo field of the SENSOR_DATA_OUTPUT message) received from flick_poll_data
+ * @param touch_info	the 32-bit gesture information (TouchInfo field of the SENSOR_DATA_OUTPUT message) received from flick_poll_data
+ * @param airwheel		the @b airwheel_data_t structure, updated according to the received data (if any) received from flick_poll_data
+ * @return FLICK_INTERACTION: type of interaction or FLICK_NO_INTERACTION if not recognized
  */
+
+flick_interaction_t flick_get_interaction(uint32_t gest_info, uint32_t touch_info, airwheel_data_t airwheel);
+
+
+
+/**
+ * @brief This function changes the value of servo_speed so it doesn't exceed 0 or 100
+ *
+ *
+ * @param servo_speed	the int servo speed info
+ * @param value_change  the value which is added to servo_speed
+ */
+
+void flick_servo_value_change(int* servo_speed,int value_change);
+
+
+
+/**
+ * @brief This function changes the speed of servo
+ *
+ * Function changes the speed of servo from airwheel data
+ *
+ * @param servo_speed	the int servo speed info
+ * @param airwheel		the @b airwheel_data_t structure, updated according to the received data (if any) received from flick_poll_data
+ */
+
+void flick_set_speed(int* servo_speed, airwheel_data_t airwheel,uint8_t* rotation_cnt);
+
+/**
+ * @brief This function maps airwheel data to desired position
+ *
+ * Function changes value of set_position variable to range 0-256 based on airwheel data
+ *
+ * @param set_position	the 8-bit desired position of IMU module further realized by motor
+ * @param airwheel		the @b airwheel_data_t structure, updated according to the received data (if any) received from flick_poll_data
+ */
+
+void flick_get_position(uint8_t* set_position, airwheel_data_t airwheel);
+
+
+
+
+
 
 #endif /* INC_FLICK_H_ */

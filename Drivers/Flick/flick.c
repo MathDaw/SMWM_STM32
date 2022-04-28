@@ -159,3 +159,103 @@ flick_data_t flick_poll_data(uint32_t* gest_info, uint32_t* touch_info, airwheel
 
 	return ret;
 }
+
+flick_interaction_t flick_get_interaction(uint32_t gest_info, uint32_t touch_info, airwheel_data_t airwheel)
+{
+	flick_interaction_t ret = FLICK_NO_INTERACTION;
+
+
+	switch (touch_info)
+			{
+				case 0x10:
+					ret = FLICK_TOUCH_SRODEK;
+					return ret;
+				case 0x4:
+					ret = FLICK_TOUCH_GORA;
+					return ret;
+				case 0x1:
+					ret = FLICK_TOUCH_DOL;
+					return ret;
+				case 0x8:
+					ret = FLICK_TOUCH_PRAWO;
+					return ret;
+				case 0x2:
+					ret = FLICK_TOUCH_LEWO;
+					return ret;
+				default:
+					ret = FLICK_NO_INTERACTION;
+					break;
+			}
+
+	switch (gest_info)
+	{
+		case 0x2:
+			ret = FLICK_SWIPE_PRAWO;
+			return ret;
+		case 0x3:
+			ret = FLICK_SWIPE_LEWO;
+			return ret;
+		default:
+			ret = FLICK_NO_INTERACTION;
+			break;
+	}
+
+
+
+
+	return ret;
+}
+
+
+void flick_servo_value_change(int* servo_speed,int value_change){
+
+	servo_speed= servo_speed+value_change;
+
+	if(servo_speed+value_change>100){
+		*servo_speed=100;
+	}
+
+	if(servo_speed+value_change<0){
+		*servo_speed=0;
+	}
+
+	return;
+}
+
+void flick_set_speed(int* servo_speed, airwheel_data_t airwheel,uint8_t* rotation_cnt){
+
+	if (airwheel.count>rotation_cnt){
+		if(airwheel.count==7 && rotation_cnt==0){		//to znaczy, że obracam w lewo i przekręciłem licznik
+			flick_servo_value_change(&servo_speed,-10);
+			rotation_cnt = (uint8_t*) airwheel.count;
+		}
+
+		else
+		{
+		flick_servo_value_change(&servo_speed,10);
+		rotation_cnt = (uint8_t*) airwheel.count;
+
+	}}
+	else if (airwheel.count<rotation_cnt)
+	{		if(airwheel.count==0 && rotation_cnt==7){		//to znaczy, że obracam w prawo i przekręciłem licznik
+		flick_servo_value_change(&servo_speed,10);
+		rotation_cnt = (uint8_t*) airwheel.count;
+	}
+	else{
+		flick_servo_value_change(&servo_speed,-10);
+		rotation_cnt = (uint8_t*) airwheel.count;
+	}}
+
+
+	return;
+
+}
+
+void flick_get_position(uint8_t* set_position, airwheel_data_t airwheel){
+
+	set_position=(airwheel.count)*32+airwheel.position;
+
+	return;
+}
+
+

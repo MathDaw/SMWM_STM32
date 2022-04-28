@@ -19,17 +19,42 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
 
+//<<<<<<< HEAD
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "string.h"
-#include "stdio.h"
-#include "stm32_adafruit_lcd.h"
-#include "flick.h"
-#include "lsm6ds33_reg.h"
-#include "math.h"
+//#include "stdio.h"
+//#include "stm32_adafruit_lcd.h"
+//#include "flick.h"
+//#include "lsm6ds33_reg.h"
+//#include "math.h"
 #include "lcd.h"
+//=======
+#include <flick.h>
+#include <lsm6ds33_reg.h>
+#include <main.h>
+#include <math.h>
+#include <stdio.h>
+#include <stm32_adafruit_lcd.h>
+#include <stm32_hal_legacy.h>
+#include <stm32l476xx.h>
+#include <stm32l4xx_hal_def.h>
+#include <stm32l4xx_hal_flash.h>
+#include <stm32l4xx_hal_gpio.h>
+#include <stm32l4xx_hal_i2c.h>
+#include <stm32l4xx_hal_i2c_ex.h>
+#include <stm32l4xx_hal_pwr_ex.h>
+#include <stm32l4xx_hal_rcc.h>
+#include <stm32l4xx_hal_rcc_ex.h>
+#include <stm32l4xx_hal_spi.h>
+#include <stm32l4xx_hal_tim.h>
+#include <stm32l4xx_hal_tim_ex.h>
+#include <stm32l4xx_hal_uart.h>
+#include <stm32l4xx_hal_uart_ex.h>
+#include <sys/_stdint.h>
+
+//>>>>>>> refs/remotes/origin/Kuba
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,6 +89,8 @@ I2C_HandleTypeDef *hi2cflick = &hi2c1;
 SPI_HandleTypeDef *hnucleo_Spi = &hspi2;
 
 int pulse_cnt;
+int servo_speed=50;
+uint8_t rotation_cnt=0;
 
 /* USER CODE END PV */
 
@@ -94,7 +121,10 @@ void (*state_array[])() = {StInit, StMenu, StAzimuth,StRange,StEdit};
 /* an enumerated type used for indexing the state_array */
 typedef enum {ST_INIT, ST_MENU, ST_AZIMUTH, ST_RANGE, ST_EDIT,ST_SPEED} state_name_t;
 state_name_t current_state;
+state_name_t last_state;
 
+uint32_t gesture, touch;
+airwheel_data_t airwheel;
 
 /* USER CODE END 0 */
 
@@ -115,6 +145,7 @@ int main(void)
 
   /* USER CODE BEGIN Init */
   current_state = ST_INIT;
+  last_state = ST_INIT;
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -150,6 +181,46 @@ int main(void)
 
 	  state_array[current_state]();
 
+//<<<<<<< HEAD
+//=======
+//	  flick_poll_data(&gesture, &touch, &airwheel);
+//
+//	  if(airwheel.new_data == FLICK_NEW_DATA)
+//	  {
+//	  	  BSP_LCD_Clear(LCD_COLOR_YELLOW);
+//		  BSP_LCD_DrawCircle(50, 110, 22);
+//		  BSP_LCD_FillCircle(50, 110, 12);
+//
+//		  sprintf(str, "pos: %02d cnt: %02d", airwheel.position, airwheel.count);
+//		  BSP_LCD_DisplayStringAtLine(4, (uint8_t *) str);
+//
+//		  uint8_t circy = 110 - 12 * sin(2*3.1416*airwheel.position/32);
+//		  uint8_t circx = 50 - 12 * cos(2*3.1416*airwheel.position/32);
+//
+//		  BSP_LCD_FillCircle(circx, circy, 3);
+//
+//		  airwheel.new_data = FLICK_NO_DATA;
+//	  }
+//
+//	  flick_interaction_t interaction=flick_get_interaction(gesture,touch,airwheel);
+
+
+
+
+	  HAL_Delay(100);
+
+	  if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
+	  {
+		  float cnt = (float)__HAL_TIM_GetCounter(&htim4) / 10;
+
+		  uint8_t str[20];
+		  sprintf((char*)str, "mot %.1f\r", cnt);
+		  BSP_LCD_DisplayStringAtLine(5, (uint8_t *) str);
+
+		  pulse_cnt = 500;
+		  HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_2);
+	  }
+//>>>>>>> refs/remotes/origin/Kuba
   }
   /* USER CODE END 3 */
 }
@@ -326,7 +397,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -606,9 +677,9 @@ void StInit(void)
 	  HAL_I2C_Mem_Read(&hi2c2, ACC_GYRO_ADDR, WHO_AM_I, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
 	  HAL_I2C_Mem_Read(&hi2c2, 0x1e<<1, 0x0f, I2C_MEMADD_SIZE_8BIT, i2c2_buf+1, 1, 1);
 
-	  char str[40];
-	  sprintf(str, "Who? A/G:%02x M:%02x", i2c2_buf[0], i2c2_buf[1]);
-	  BSP_LCD_DisplayStringAtLine(10, (uint8_t *) str);
+//	  char str[40];
+//	  sprintf(str, "Who? A/G:%02x M:%02x", i2c2_buf[0], i2c2_buf[1]);
+//	  BSP_LCD_DisplayStringAtLine(10, (uint8_t *) str);
 
 	  /* cfg gyro */
 	  i2c2_buf[0] = 0x38;		// enable X,Y,Z axes
@@ -627,61 +698,91 @@ void StInit(void)
 
 void StMenu(void)
 {
-	uint32_t gesture, touch;
-	airwheel_data_t airwheel;
+
 
 	flick_poll_data(&gesture, &touch, &airwheel);
 
-	char str[40];
-	BSP_LCD_Clear(LCD_COLOR_WHITE);
+	if(current_state != last_state)
+	{
+		char str[40];
+		BSP_LCD_Clear(LCD_COLOR_WHITE);
 
-	sprintf(str, "MENU");
+		sprintf(str, "MENU");
 
-	BSP_LCD_DisplayStringAt(0, 1, (uint8_t *) str, CENTER_MODE);
-	sprintf(str, "Wybierz opcje:");
+		BSP_LCD_DisplayStringAt(0, 1, (uint8_t *) str, CENTER_MODE);
+		sprintf(str, "Wybierz opcje:");
 
-	BSP_LCD_DisplayStringAt(0, 15, (uint8_t *) str, CENTER_MODE);
-	sprintf(str, "<- Wybor trybu");
+		BSP_LCD_DisplayStringAt(0, 15, (uint8_t *) str, CENTER_MODE);
+		sprintf(str, "<- Wybor trybu");
 
-	BSP_LCD_DisplayStringAt(0, 70, (uint8_t *) str, LEFT_MODE);
-	sprintf(str, "Ustaw predkosc ->");
+		BSP_LCD_DisplayStringAt(0, 70, (uint8_t *) str, LEFT_MODE);
+		sprintf(str, "Ustaw predkosc ->");
 
-	BSP_LCD_DisplayStringAt(0, 90, (uint8_t *) str, RIGHT_MODE);
-	sprintf(str, "Aktywuj");
+		BSP_LCD_DisplayStringAt(0, 90, (uint8_t *) str, RIGHT_MODE);
+		sprintf(str, "Aktywuj");
 
-	BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
-	HAL_Delay(500);
+		BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
+		last_state = current_state;
+	}
+
+//	HAL_Delay(500);
 
 	// Odczyt gestu flick
 	flick_interaction_t interaction=flick_get_interaction(gesture,touch,airwheel);
 
 	// Przejście do odpowiedniego stanu
-	if(interaction == FLICK_TOUCH_LEFT)
+//	if(interaction == FLICK_NO_INTERACTION)
+//		{
+//			BSP_LCD_Clear(LCD_COLOR_YELLOW);
+//			HAL_Delay(500);
+//		}
+	if(interaction == FLICK_TOUCH_LEWO)
 	{
 
+		current_state = ST_EDIT;
 	}
-	if(interaction == FLICK_TOUCH_RIGHT)
+	if(interaction == FLICK_TOUCH_PRAWO)
 	{
-		;
+
+		current_state = ST_SPEED;
+	}
+	if(interaction == FLICK_TOUCH_DOL)
+	{
+
+		current_state = ST_AZIMUTH;
+		//HAL_Delay(500);
 	}
 }
 void StAzimuth(void)
 {
 	char str[40];
-	BSP_LCD_Clear(LCD_COLOR_WHITE);
+
 	uint8_t angle;
-	sprintf(str, "Utrzymanie azymutu");
-	BSP_LCD_DisplayStringAt(64, 15, (uint8_t *) str, CENTER_MODE);
+	if(current_state != last_state)
+	{
+		BSP_LCD_Clear(LCD_COLOR_WHITE);
 
-	angle = 0;	// kat testowy
-	LCD_PrintDirection(angle, 64, 80, 50, LCD_COLOR_RED);//aktualny azymut
-	//dodać zadany przez użytkownika azymut
+		sprintf(str, "Utrzymanie azymutu");
+		BSP_LCD_DisplayStringAt(0, 10, (uint8_t *) str, CENTER_MODE);
 
-	sprintf(str, "Powrot do MENU");
-	BSP_LCD_DisplayStringAt(64, 155, (uint8_t *) str, CENTER_MODE);
+		angle = 3.14/4;	// kat testowy
+		LCD_PrintDirection(angle, 64, 80, 50, LCD_COLOR_RED);//aktualny azymut
+		//dodać zadany przez użytkownika azymut
 
+		sprintf(str, "Powrot do MENU");
+		BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
+		last_state = current_state;
+	}
+
+//	HAL_Delay(1000);
 	// Przejść do stanu Menu
+	flick_interaction_t interaction = flick_get_interaction(gesture,touch,airwheel);
 
+	if(interaction == FLICK_TOUCH_SRODEK)
+	{
+		current_state = ST_MENU;
+		//HAL_Delay(500);
+	}
 }
 void StRange(void)
 {
