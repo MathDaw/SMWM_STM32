@@ -29,7 +29,7 @@
 #include "flick.h"
 #include "lsm6ds33_reg.h"
 #include "math.h"
-#include "mylis3dml.h"
+#include "magneto.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -182,15 +182,9 @@ int main(void)
 
   /* Magneto */
   /* cfg magneto */
-    i2c2_buf[0] = 0x00;
-    HAL_I2C_Mem_Write(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_CTRL_REG2, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
-    i2c2_buf[0] = 0xFC;
-    HAL_I2C_Mem_Write(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_CTRL_REG1, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
-    i2c2_buf[0] = 0x0C;
-    HAL_I2C_Mem_Write(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_CTRL_REG4, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
-    i2c2_buf[0] = 0x00;
-    HAL_I2C_Mem_Write(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_CTRL_REG3, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
 
+  /*wpisanie funkcji cfg*/
+  cfg_magneto(&hi2c2);
 
 
   /* USER CODE END 2 */
