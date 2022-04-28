@@ -61,7 +61,7 @@ STEPPER stepper_inizialize(
 
 void stepper_set_destination(STEPPER* stepper, int32_t pos, uint8_t state)
 {
-	pos = 32 * pos;
+	pos = 12 * pos;
 	if(pos > 32000) pos = 3200;
 
 	if(state==1)
@@ -72,9 +72,9 @@ void stepper_set_destination(STEPPER* stepper, int32_t pos, uint8_t state)
 	else if(state==2)
 	{
 		stepper->destination[0]=pos;
-		stepper->destination[1]=2*(pos-stepper->position)/3+stepper->position;
-		stepper->destination[2]=(pos-stepper->position)/3+stepper->position;
-		stepper->speed=stepper->speed/2;
+		stepper->destination[1]=4*(pos-stepper->position)/5+stepper->position;
+		stepper->destination[2]=(pos-stepper->position)/5+stepper->position;
+		//stepper->speed=stepper->speed*2;
 		__HAL_TIM_SET_PRESCALER(stepper->Timer, stepper->speed);
 		stepper->state=2;
 
