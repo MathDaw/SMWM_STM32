@@ -91,6 +91,7 @@ SPI_HandleTypeDef *hnucleo_Spi = &hspi2;
 int pulse_cnt;
 int servo_speed=50;
 uint8_t rotation_cnt=0;
+uint8_t position = 0;
 
 /* USER CODE END PV */
 
@@ -111,17 +112,27 @@ void StAzimuth(void);
 void StRange(void);
 void StEdit (void);
 void StSpeed (void);
+void flick_set_value(uint16_t *value, uint16_t min_value, uint16_t max_value);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void (*state_array[])() = {StInit, StMenu, StAzimuth,StRange,StEdit};
+void (*state_array[])() = {StInit, StMenu, StAzimuth,StRange,StEdit,StSpeed};
 /* an enumerated type used for indexing the state_array */
 typedef enum {ST_INIT, ST_MENU, ST_AZIMUTH, ST_RANGE, ST_EDIT,ST_SPEED} state_name_t;
+//typedef enum {ST_AZIMUTH, ST_RANGE} mode_name_t;
 state_name_t current_state;
 state_name_t last_state;
+state_name_t select_mode;
+//mode_name_t select_mode;
+
+uint8_t opt;
+uint8_t last_opt;
+
+uint16_t set_angle_1;
+uint16_t set_angle_2;
 
 uint32_t gesture, touch;
 airwheel_data_t airwheel;
@@ -181,46 +192,6 @@ int main(void)
 
 	  state_array[current_state]();
 
-//<<<<<<< HEAD
-//=======
-//	  flick_poll_data(&gesture, &touch, &airwheel);
-//
-//	  if(airwheel.new_data == FLICK_NEW_DATA)
-//	  {
-//	  	  BSP_LCD_Clear(LCD_COLOR_YELLOW);
-//		  BSP_LCD_DrawCircle(50, 110, 22);
-//		  BSP_LCD_FillCircle(50, 110, 12);
-//
-//		  sprintf(str, "pos: %02d cnt: %02d", airwheel.position, airwheel.count);
-//		  BSP_LCD_DisplayStringAtLine(4, (uint8_t *) str);
-//
-//		  uint8_t circy = 110 - 12 * sin(2*3.1416*airwheel.position/32);
-//		  uint8_t circx = 50 - 12 * cos(2*3.1416*airwheel.position/32);
-//
-//		  BSP_LCD_FillCircle(circx, circy, 3);
-//
-//		  airwheel.new_data = FLICK_NO_DATA;
-//	  }
-//
-//	  flick_interaction_t interaction=flick_get_interaction(gesture,touch,airwheel);
-
-
-
-
-	  HAL_Delay(100);
-
-	  if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
-	  {
-		  float cnt = (float)__HAL_TIM_GetCounter(&htim4) / 10;
-
-		  uint8_t str[20];
-		  sprintf((char*)str, "mot %.1f\r", cnt);
-		  BSP_LCD_DisplayStringAtLine(5, (uint8_t *) str);
-
-		  pulse_cnt = 500;
-		  HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_2);
-	  }
-//>>>>>>> refs/remotes/origin/Kuba
   }
   /* USER CODE END 3 */
 }
@@ -664,6 +635,7 @@ void StInit(void)
 //	  HAL_Delay(1000);
 //	  BSP_LCD_DisplayStringAtLine(3, (uint8_t *) "test");
 //	  HAL_Delay(1000);
+
 	  /* Sensors */
 	  HAL_I2C_Init(&hi2c1);
 	  HAL_I2C_Init(&hi2c2);
@@ -698,8 +670,6 @@ void StInit(void)
 
 void StMenu(void)
 {
-
-
 	flick_poll_data(&gesture, &touch, &airwheel);
 
 	if(current_state != last_state)
@@ -708,142 +678,289 @@ void StMenu(void)
 		BSP_LCD_Clear(LCD_COLOR_WHITE);
 
 		sprintf(str, "MENU");
-
 		BSP_LCD_DisplayStringAt(0, 1, (uint8_t *) str, CENTER_MODE);
+
 		sprintf(str, "Wybierz opcje:");
-
 		BSP_LCD_DisplayStringAt(0, 15, (uint8_t *) str, CENTER_MODE);
+
 		sprintf(str, "<- Wybor trybu");
-
 		BSP_LCD_DisplayStringAt(0, 70, (uint8_t *) str, LEFT_MODE);
+
 		sprintf(str, "Ustaw predkosc ->");
-
 		BSP_LCD_DisplayStringAt(0, 90, (uint8_t *) str, RIGHT_MODE);
-		sprintf(str, "Aktywuj");
 
+		sprintf(str, "Aktywuj");
 		BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
+
 		last_state = current_state;
 	}
 
-//	HAL_Delay(500);
-
 	// Odczyt gestu flick
+
 	flick_interaction_t interaction=flick_get_interaction(gesture,touch,airwheel);
 
 	// Przejście do odpowiedniego stanu
+
 //	if(interaction == FLICK_NO_INTERACTION)
-//		{
-//			BSP_LCD_Clear(LCD_COLOR_YELLOW);
-//			HAL_Delay(500);
-//		}
+//	{
+//		BSP_LCD_Clear(LCD_COLOR_YELLOW);
+//		HAL_Delay(500);
+//	}
+
 	if(interaction == FLICK_TOUCH_LEWO)
 	{
-
 		current_state = ST_EDIT;
 	}
 	if(interaction == FLICK_TOUCH_PRAWO)
 	{
-
 		current_state = ST_SPEED;
 	}
 	if(interaction == FLICK_TOUCH_DOL)
 	{
-
-		current_state = ST_AZIMUTH;
-		//HAL_Delay(500);
+		current_state = select_mode;
 	}
 }
 void StAzimuth(void)
 {
 	char str[40];
+	uint8_t angle = 0;
+	uint8_t last_angle = 0;
 
-	uint8_t angle;
+	// dodać odczyt z magnetometru
+
+	flick_poll_data(&gesture, &touch, &airwheel);
+
 	if(current_state != last_state)
 	{
 		BSP_LCD_Clear(LCD_COLOR_WHITE);
 
 		sprintf(str, "Utrzymanie azymutu");
 		BSP_LCD_DisplayStringAt(0, 10, (uint8_t *) str, CENTER_MODE);
-
-		angle = 3.14/4;	// kat testowy
-		LCD_PrintDirection(angle, 64, 80, 50, LCD_COLOR_RED);//aktualny azymut
-		//dodać zadany przez użytkownika azymut
+		BSP_LCD_DisplayStringAt(0, 20, "N", CENTER_MODE);
 
 		sprintf(str, "Powrot do MENU");
 		BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
 		last_state = current_state;
 	}
 
-//	HAL_Delay(1000);
+	uint8_t set_angle_1 = 3.14/3;	// kat testowy
+	if (set_angle_1 != angle)
+	{
+		LCD_PrintDirection(set_angle_1, set_angle_1, 64, 80, 50, LCD_COLOR_BLACK); // zadany azymut
+	}
+
+	angle = 3.14/4;	// kat testowy
+	LCD_PrintDirection(angle, last_angle, 64, 80, 50, LCD_COLOR_RED); //aktualny azymut
+
+	last_angle = angle;
+
+	// dodać sterowanie silnikiem
+
 	// Przejść do stanu Menu
 	flick_interaction_t interaction = flick_get_interaction(gesture,touch,airwheel);
 
 	if(interaction == FLICK_TOUCH_SRODEK)
 	{
 		current_state = ST_MENU;
-		//HAL_Delay(500);
 	}
 }
 void StRange(void)
 {
 	char str[40];
-	BSP_LCD_Clear(LCD_COLOR_WHITE);
+
 	uint8_t angle;
-	sprintf(str, "Zakres");
-	BSP_LCD_DisplayStringAt(64, 15, (uint8_t *) str, CENTER_MODE);
+
+	// dodać odczyt z magnetometru
+
+	flick_poll_data(&gesture, &touch, &airwheel);
+	if(current_state != last_state)
+	{
+		BSP_LCD_Clear(LCD_COLOR_WHITE);
+
+		sprintf(str, "Zakres");
+		BSP_LCD_DisplayStringAt(0, 10, (uint8_t *) str, CENTER_MODE);
+
+		sprintf(str, "Powrot do MENU");
+		BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
+		last_state = current_state;
+	}
 
 	angle = 0;	// kat testowy
-	LCD_PrintDirection(angle, 64, 80, 50, LCD_COLOR_RED);//aktualny azymut
+	LCD_PrintDirection(angle, angle, 64, 80, 50, LCD_COLOR_RED); //aktualny azymut
+
 	//dodać zadany przez użytkownika dolny ogranicznik
+	uint8_t set_angle_1 = 0;	// kat testowy
+	LCD_PrintDirection(set_angle_1, set_angle_1, 64, 80, 50, LCD_COLOR_BLACK); //ogranicznik 1
+
 	//dodać zadany przez użytkownika gorny ogranicznik
-	sprintf(str, "Powrot do MENU");
-	BSP_LCD_DisplayStringAt(64, 155, (uint8_t *) str, CENTER_MODE);
+	uint8_t set_angle_2 = 0;	// kat testowy
+	LCD_PrintDirection(set_angle_2, set_angle_2, 64, 80, 50, LCD_COLOR_BLACK); // ogranicznik 2
+
+
+	//dodać sterowanie silnikiem
+
 
 	// Przejść do stanu Menu
+	flick_interaction_t interaction = flick_get_interaction(gesture,touch,airwheel);
 
+	if(interaction == FLICK_TOUCH_SRODEK)
+	{
+		current_state = ST_MENU;
+	}
 }
 void StEdit (void)
 {
 	char str[40];
-	BSP_LCD_Clear(LCD_COLOR_WHITE);
 
-	sprintf(str, "Wybierz tryb");
-	BSP_LCD_DisplayStringAt(64, 15, (uint8_t *) str, CENTER_MODE);
+	flick_poll_data(&gesture, &touch, &airwheel);
+	if(current_state != last_state)
+	{
+		opt = 0;
+		last_opt = 1;
+	}
+	switch (opt)
+	{
+	case 0:
+		if(last_opt != opt)
+		{
+			BSP_LCD_Clear(LCD_COLOR_WHITE);
+			sprintf(str, "Wybierz tryb");
+			BSP_LCD_DisplayStringAt(0, 10, (uint8_t *) str, CENTER_MODE);
+
+			sprintf(str, "Zatwierdz");
+			BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
+		}
+
+		uint8_t tmp = 0;
+		flick_set_value(&tmp, ST_AZIMUTH*10, ST_RANGE*10);
+		select_mode = tmp/10;
+
+		if(select_mode == ST_AZIMUTH)
+		{
+			sprintf(str, "     Azymut    ");
+			BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
+		}
+		if(select_mode == ST_RANGE)
+		{
+			sprintf(str, "     Zakres     ");
+			BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
+		}
+		last_opt = opt;
+		break;
+
+	case 1:
+		if(last_opt != opt)
+		{
+			BSP_LCD_Clear(LCD_COLOR_WHITE);
+			sprintf(str, "Podaj dolna wartosc ograniczajaca");
+			BSP_LCD_DisplayStringAt(0, 10, (uint8_t *) str, CENTER_MODE);
+
+			sprintf(str, "Zatwierdz");
+			BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
+		}
+
+		flick_set_value(&set_angle_1, 0, 360);
+
+		sprintf(str, "   %02x   ", set_angle_1);
+		BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
+
+		last_opt = opt;
+		break;
+
+	case 2:
+		if(select_mode == ST_RANGE)
+		{
+			if(last_opt != opt)
+			{
+				BSP_LCD_Clear(LCD_COLOR_WHITE);
+				sprintf(str, "Podaj gorna wartosc ograniczajaca");
+				BSP_LCD_DisplayStringAt(0, 10, (uint8_t *) str, CENTER_MODE);
+
+				sprintf(str, "Zatwierdz");
+				BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
+			}
+
+			flick_set_value(&set_angle_2, 0, 360);
+
+			sprintf(str, "   %02x   ", set_angle_2);
+			BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
+
+			last_opt = opt;
+		}
+		else opt++;
+		break;
+
+	default:
+		current_state = ST_MENU;
+		break;
+	}
 
 	// odczyt z flick
 
-	sprintf(str, "Podaj dolna wartosc ograniczajaca");
-	BSP_LCD_DisplayStringAt(64, 15, (uint8_t *) str, CENTER_MODE);
+//	if(select_mode == ST_RANGE)
+//	{
+//		BSP_LCD_Clear(LCD_COLOR_WHITE);
+//		sprintf(str, "Podaj gorna wartosc ograniczajaca");
+//		BSP_LCD_DisplayStringAt(0, 10, (uint8_t *) str, CENTER_MODE);
+//
+//		sprintf(str, "   %02x   ", set_angle_2);
+//		BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
+//	}
 
 	// odczyt z flick
 
-	sprintf(str, "Podaj gorna wartosc ograniczajaca");
-	BSP_LCD_DisplayStringAt(64, 15, (uint8_t *) str, CENTER_MODE);
-
-	// odczyt z flick
-
-	sprintf(str, "Zatwierdz");
-	BSP_LCD_DisplayStringAt(64, 155, (uint8_t *) str, CENTER_MODE);
-	// zatwierdz kliknieciem
-
-	current_state = ST_MENU;
+	// przejscie do kolejnej opcji
+	flick_interaction_t interaction = flick_get_interaction(gesture,touch,airwheel);
+	if(interaction == FLICK_TOUCH_SRODEK)
+	{
+		opt++;
+	}
 }
 void StSpeed (void)
 {
 	char str[40];
-	BSP_LCD_Clear(LCD_COLOR_WHITE);
+	flick_poll_data(&gesture, &touch, &airwheel);
+	if(current_state != last_state)
+	{
+		BSP_LCD_Clear(LCD_COLOR_WHITE);
 
-	sprintf(str, "Podaj prędkosc silnika");
-	BSP_LCD_DisplayStringAt(64, 15, (uint8_t *) str, CENTER_MODE);
+		sprintf(str, "Podaj prędkosc silnika");
+		BSP_LCD_DisplayStringAt(0, 10, (uint8_t *) str, CENTER_MODE);
 
-	// odczyt z flick
+		sprintf(str, "Zatwierdz");
+		BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
+		last_state = current_state;
+	}
 
-	sprintf(str, "Zatwierdz");
-	BSP_LCD_DisplayStringAt(64, 155, (uint8_t *) str, CENTER_MODE);
+
+	// odczyt z flick i zmiana predkosci
+
+	//wyswietlenie nastawionej predkosci
+//	sprintf(str, "   %02x   ", servo_speed);
+//	BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
+
 	// zatwierdz kliknieciem
-
-	current_state = ST_MENU;
+	flick_interaction_t interaction = flick_get_interaction(gesture,touch,airwheel);
+	if(interaction == FLICK_TOUCH_SRODEK)
+	{
+		current_state = ST_MENU;
+	}
 }
+void flick_set_value(uint16_t *value, uint16_t min_value, uint16_t max_value)
+{
+	flick_interaction_t interaction = flick_get_interaction(gesture,touch,airwheel);
+	if(interaction == FLICK_TOUCH_LEWO)
+	{
+		value = value - 10;
+		if(value < min_value) value = min_value;
+	}
+	if(interaction == FLICK_TOUCH_LEWO)
+	{
+		value = value + 10;
+		if(value > max_value) value = max_value;
+	}
+}
+// sprawdzić
 
 /* USER CODE END 4 */
 

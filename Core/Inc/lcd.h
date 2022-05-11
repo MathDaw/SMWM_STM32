@@ -42,7 +42,7 @@
 
 
 
-void LCD_PrintDirection(uint8_t pos,uint8_t x_center,uint8_t y_center,uint8_t radius,uint16_t line_color);
+void LCD_PrintDirection(uint8_t pos,uint8_t last_pos,uint8_t x_center,uint8_t y_center,uint8_t radius,uint16_t line_color);
 /**
  * A handle for the SPI control structure (as used in the STM32 HAL library).
  * The structure should be initialized in the main user code

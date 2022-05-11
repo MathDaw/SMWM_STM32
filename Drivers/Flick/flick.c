@@ -209,13 +209,13 @@ flick_interaction_t flick_get_interaction(uint32_t gest_info, uint32_t touch_inf
 
 void flick_servo_value_change(int* servo_speed,int value_change){
 
-	servo_speed= servo_speed+value_change;
+	*servo_speed= *servo_speed+value_change;
 
-	if(servo_speed+value_change>100){
+	if(*servo_speed+value_change>100){
 		*servo_speed=100;
 	}
 
-	if(servo_speed+value_change<0){
+	if(*servo_speed+value_change<0){
 		*servo_speed=0;
 	}
 
@@ -224,26 +224,26 @@ void flick_servo_value_change(int* servo_speed,int value_change){
 
 void flick_set_speed(int* servo_speed, airwheel_data_t airwheel,uint8_t* rotation_cnt){
 
-	if (airwheel.count>rotation_cnt){
-		if(airwheel.count==7 && rotation_cnt==0){		//to znaczy, że obracam w lewo i przekręciłem licznik
-			flick_servo_value_change(&servo_speed,-10);
-			rotation_cnt = (uint8_t*) airwheel.count;
+	if (airwheel.count>*rotation_cnt){
+		if(airwheel.count==7 && *rotation_cnt==0){		//to znaczy, że obracam w lewo i przekręciłem licznik
+			flick_servo_value_change(servo_speed,-10);
+			*rotation_cnt = (uint8_t*) airwheel.count;
 		}
 
 		else
 		{
-		flick_servo_value_change(&servo_speed,10);
-		rotation_cnt = (uint8_t*) airwheel.count;
+		flick_servo_value_change(servo_speed,10);
+		*rotation_cnt = (uint8_t*) airwheel.count;
 
 	}}
-	else if (airwheel.count<rotation_cnt)
-	{		if(airwheel.count==0 && rotation_cnt==7){		//to znaczy, że obracam w prawo i przekręciłem licznik
-		flick_servo_value_change(&servo_speed,10);
-		rotation_cnt = (uint8_t*) airwheel.count;
+	else if (airwheel.count<*rotation_cnt)
+	{		if(airwheel.count==0 && *rotation_cnt==7){		//to znaczy, że obracam w prawo i przekręciłem licznik
+		flick_servo_value_change(servo_speed,10);
+		*rotation_cnt = (uint8_t*) airwheel.count;
 	}
 	else{
-		flick_servo_value_change(&servo_speed,-10);
-		rotation_cnt = (uint8_t*) airwheel.count;
+		flick_servo_value_change(servo_speed,-10);
+		*rotation_cnt = (uint8_t*) airwheel.count;
 	}}
 
 
@@ -253,7 +253,7 @@ void flick_set_speed(int* servo_speed, airwheel_data_t airwheel,uint8_t* rotatio
 
 void flick_get_position(uint8_t* set_position, airwheel_data_t airwheel){
 
-	set_position=(airwheel.count)*32+airwheel.position;
+	*set_position=(airwheel.count)*32+airwheel.position;
 
 	return;
 }
