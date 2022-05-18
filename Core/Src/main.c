@@ -24,13 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "string.h"
-//#include "stdio.h"
-//#include "stm32_adafruit_lcd.h"
-//#include "flick.h"
-//#include "lsm6ds33_reg.h"
-//#include "math.h"
 #include "lcd.h"
-//=======
 #include <flick.h>
 #include <lsm6ds33_reg.h>
 #include <main.h>
@@ -54,7 +48,6 @@
 #include <stm32l4xx_hal_uart_ex.h>
 #include <sys/_stdint.h>
 
-//>>>>>>> refs/remotes/origin/Kuba
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -137,6 +130,15 @@ uint16_t set_angle_2;
 uint32_t gesture, touch;
 airwheel_data_t airwheel;
 
+void Pulse_Counter(void)
+{
+	if (pulse_cnt > 0) pulse_cnt--;
+	else
+	{
+		HAL_TIM_PWM_Stop_IT(&htim2, TIM_CHANNEL_2);
+		__HAL_TIM_SET_COUNTER(&htim2, 2000);
+	}
+}
 /* USER CODE END 0 */
 
 /**
