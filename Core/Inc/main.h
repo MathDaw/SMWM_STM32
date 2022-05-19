@@ -80,8 +80,8 @@ void Pulse_Counter(void);
 #define MOT_DIR1_GPIO_Port GPIOA
 #define MOT_RESET_Pin GPIO_PIN_9
 #define MOT_RESET_GPIO_Port GPIOA
-#define MOT_FAULT_Pin GPIO_PIN_10
-#define MOT_FAULT_GPIO_Port GPIOA
+#define MOT_E_Pin GPIO_PIN_10
+#define MOT_E_GPIO_Port GPIOA
 #define MOT_PWM1_Pin GPIO_PIN_3
 #define MOT_PWM1_GPIO_Port GPIOB
 #define MOT_MODE1_Pin GPIO_PIN_4
@@ -99,5 +99,3 @@ void Pulse_Counter(void);
 #endif
 
 #endif /* __MAIN_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

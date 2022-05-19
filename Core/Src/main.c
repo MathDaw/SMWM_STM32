@@ -48,6 +48,7 @@
 #include <stm32l4xx_hal_uart_ex.h>
 #include <sys/_stdint.h>
 
+#include "stepper.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,7 +66,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-I2C_HandleTypeDef hi2c1;
+ I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
 
 SPI_HandleTypeDef hspi2;
@@ -129,6 +130,9 @@ uint16_t set_angle_2;
 
 uint32_t gesture, touch;
 airwheel_data_t airwheel;
+
+//stepper
+STEPPER stepper;
 
 //void Pulse_Counter(void)
 //{
@@ -194,6 +198,21 @@ int main(void)
 
 	  state_array[current_state]();
 
+// przemyśleć gdzie umieścić
+
+	stepper_set_destination(&stepper,5,2);
+	stepper_set_speed(&stepper, 95);
+	stepper_proceed(&stepper);
+	  while(stepper.is_working)
+	  {}
+	  HAL_Delay(500);
+	  stepper_set_destination(&stepper,250,2);
+	  stepper_set_speed(&stepper, 15);
+	  stepper_proceed(&stepper);
+	  while(stepper.is_working)
+	  {}
+	  HAL_Delay(500);
+
   }
   /* USER CODE END 3 */
 }
@@ -206,7 +225,13 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+
+  /** Configure the main internal regulator output voltage
+  */
+  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -225,6 +250,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -235,21 +261,6 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_I2C1
-                              |RCC_PERIPHCLK_I2C2;
-  PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
-  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
-  PeriphClkInit.I2c2ClockSelection = RCC_I2C2CLKSOURCE_PCLK1;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure the main internal regulator output voltage
-  */
-  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
   {
     Error_Handler();
   }
@@ -283,12 +294,14 @@ static void MX_I2C1_Init(void)
   {
     Error_Handler();
   }
+
   /** Configure Analogue filter
   */
   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
   {
     Error_Handler();
   }
+
   /** Configure Digital filter
   */
   if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
@@ -329,12 +342,14 @@ static void MX_I2C2_Init(void)
   {
     Error_Handler();
   }
+
   /** Configure Analogue filter
   */
   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
   {
     Error_Handler();
   }
+
   /** Configure Digital filter
   */
   if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
@@ -555,7 +570,7 @@ static void MX_GPIO_Init(void)
                           |FLICK_RESET_Pin|MOT_REF_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, LD2_Pin|MOT_DIR1_Pin|MOT_RESET_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LD2_Pin|MOT_DIR1_Pin|MOT_RESET_Pin|MOT_E_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, MOT_MODE1_Pin|MOT_MODE2_Pin, GPIO_PIN_RESET);
@@ -580,8 +595,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(LCD_RST_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LD2_Pin MOT_DIR1_Pin MOT_RESET_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin|MOT_DIR1_Pin|MOT_RESET_Pin;
+  /*Configure GPIO pins : LD2_Pin MOT_DIR1_Pin MOT_RESET_Pin MOT_E_Pin */
+  GPIO_InitStruct.Pin = LD2_Pin|MOT_DIR1_Pin|MOT_RESET_Pin|MOT_E_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -600,12 +615,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : MOT_FAULT_Pin */
-  GPIO_InitStruct.Pin = MOT_FAULT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(MOT_FAULT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : MOT_MODE1_Pin MOT_MODE2_Pin */
   GPIO_InitStruct.Pin = MOT_MODE1_Pin|MOT_MODE2_Pin;
@@ -645,6 +654,44 @@ void StInit(void)
 	  /* Flick */
 	  flick_reset();
 	  flick_set_param(0x90, 0x20, 0x20);
+
+/* Stepstick */
+
+  /*
+   * Stary kod
+  HAL_TIM_Base_Start(&htim4);
+
+  HAL_GPIO_WritePin(MOT_RESET_GPIO_Port, MOT_RESET_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(MOT_MODE1_GPIO_Port, MOT_MODE1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(MOT_MODE2_GPIO_Port, MOT_MODE2_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(MOT_RESET_GPIO_Port, MOT_RESET_Pin, GPIO_PIN_SET);
+  */
+  /*
+   * #define MOT_REF_Pin GPIO_PIN_7
+  #define MOT_REF_GPIO_Port GPIOC
+  #define MOT_DIR1_Pin GPIO_PIN_8
+  #define MOT_DIR1_GPIO_Port GPIOA
+  #define MOT_RESET_Pin GPIO_PIN_9
+  #define MOT_RESET_GPIO_Port GPIOA
+  #define MOT_FAULT_Pin GPIO_PIN_10
+  #define MOT_FAULT_GPIO_Port GPIOA
+  #define MOT_PWM1_Pin GPIO_PIN_3
+  #define MOT_PWM1_GPIO_Port GPIOB
+  #define MOT_MODE1_Pin GPIO_PIN_4
+  #define MOT_MODE1_GPIO_Port GPIOB
+  #define MOT_MODE2_Pin GPIO_PIN_6
+  #define MOT_MODE2_GPIO_Port GPIOB
+   */
+
+  stepper = stepper_inizialize(
+			GPIOC, GPIO_PIN_7,
+			GPIOA, GPIO_PIN_8,
+			GPIOA, GPIO_PIN_9,
+			GPIOA, GPIO_PIN_10,
+			GPIOB, GPIO_PIN_4,
+			GPIOB, GPIO_PIN_6,
+			&htim2, TIM_CHANNEL_2);
+
 
 	  /* IMU */
 	  uint8_t i2c2_buf[10];
@@ -964,6 +1011,46 @@ void flick_set_value(uint16_t *value, uint16_t min_value, uint16_t max_value)
 }
 // sprawdzić
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
+{
+	if(htim==stepper.Timer)
+	{
+		stepper.position+=stepper.direction;
+		if(stepper.state==1)
+		{
+			if(stepper.position==stepper.destination[0])
+			{
+				HAL_TIM_PWM_Stop(stepper.Timer, stepper.Channel);
+				HAL_TIM_Base_Stop_IT(stepper.Timer);
+				stepper.is_working=0;
+				stepper.state=0;
+			}
+		}
+		else if(stepper.state==2)
+		{
+			if(stepper.position==stepper.destination[2])
+			{
+				stepper.speed=stepper.speed/2;
+				__HAL_TIM_SET_PRESCALER(stepper.Timer, stepper.speed);
+			}
+			else if(stepper.position==stepper.destination[1])
+			{
+				stepper.speed=stepper.speed*2;
+				__HAL_TIM_SET_PRESCALER(stepper.Timer, stepper.speed);
+			}
+			else if(stepper.position==stepper.destination[0])
+			{
+				HAL_TIM_PWM_Stop(stepper.Timer, stepper.Channel);
+				HAL_TIM_Base_Stop_IT(stepper.Timer);
+				stepper.is_working=0;
+				stepper.state=0;
+				stepper.speed=stepper.speed/2;
+				__HAL_TIM_SET_PRESCALER(stepper.Timer, stepper.speed);
+			}
+		}
+	}
+}
+
 /* USER CODE END 4 */
 
 /**
@@ -994,5 +1081,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
