@@ -49,6 +49,7 @@
 #include <sys/_stdint.h>
 
 #include "stepper.h"
+#include "magneto.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -66,7 +67,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
- I2C_HandleTypeDef hi2c1;
+I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
 
 SPI_HandleTypeDef hspi2;
@@ -186,6 +187,14 @@ int main(void)
 
 
 
+
+  /* Magneto */
+  /* cfg magneto */
+
+  /*wpisanie funkcji cfg*/
+  cfg_magneto(&hi2c2);
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -212,6 +221,44 @@ int main(void)
 	  while(stepper.is_working)
 	  {}
 	  HAL_Delay(500);
+	  
+	  uint8_t magneto_status;
+	  	  int16_t magneto_z, magneto_x, magneto_y;
+	  	  uint8_t *p_magneto_x = (uint8_t*) &magneto_x;
+	  	  uint8_t *p_magneto_y = (uint8_t*) &magneto_y;
+	  	  uint8_t *p_magneto_z = (uint8_t*) &magneto_z;
+
+		  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_STATUS_REG, I2C_MEMADD_SIZE_8BIT, &magneto_status, 1, 1);
+
+		  if (magneto_status & (1 << 0)){
+			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTX_L, I2C_MEMADD_SIZE_8BIT, p_magneto_x, 1, 1);
+			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTX_H, I2C_MEMADD_SIZE_8BIT, p_magneto_x+1, 1, 1);
+	 	 }
+		  if (magneto_status & (1 << 1)){
+		  			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTY_L, I2C_MEMADD_SIZE_8BIT, p_magneto_y, 1, 1);
+		  			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTY_H, I2C_MEMADD_SIZE_8BIT, p_magneto_y+1, 1, 1);
+		  	 	 }
+		  if (magneto_status & (1 << 2)){
+		  			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTZ_L, I2C_MEMADD_SIZE_8BIT, p_magneto_z, 1, 1);
+		  			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTZ_H, I2C_MEMADD_SIZE_8BIT, p_magneto_z+1, 1, 1);
+		  	 	 }
+
+		  int16_t z_max = 1100, z_min = -900;
+		  int16_t y_max = -7400, y_min = -4600;
+
+		  double z = (double)2.0*(magneto_z-(z_min+z_max)/2.0)/(z_max-z_min);
+		  double y = (double)2.0*(magneto_y-(y_min+y_max)/2.0)/(y_max-y_min);
+		  double kat = (M_PI + atan2(z,y));
+		  uint8_t kierunek = (uint8_t) 255*(kat/2/M_PI);
+
+
+
+		  sprintf(str, "z=%.2f y=%.2f  ", z, y);
+		  BSP_LCD_DisplayStringAtLine(5, (uint8_t *) str);
+		  sprintf(str, "%f  ", 180/M_PI*kat);
+		  BSP_LCD_DisplayStringAtLine(6, (uint8_t *) str);
+		  sprintf(str, "%u  ", kierunek);
+		  BSP_LCD_DisplayStringAtLine(7, (uint8_t *) str);
 
   }
   /* USER CODE END 3 */
@@ -225,6 +272,7 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Configure the main internal regulator output voltage
   */
@@ -261,6 +309,21 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_I2C1
+                              |RCC_PERIPHCLK_I2C2;
+  PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
+  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
+  PeriphClkInit.I2c2ClockSelection = RCC_I2C2CLKSOURCE_PCLK1;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure the main internal regulator output voltage
+  */
+  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
   {
     Error_Handler();
   }
