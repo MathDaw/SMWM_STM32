@@ -8,10 +8,20 @@
 #ifndef INC_MAGNETO_H_
 #define INC_MAGNETO_H_
 
+
+
+
 #include "stm32l4xx_hal.h"
 
 // Default address
 #define		ACC_MAGNETO_ADDR		(0x1e<<1)
+
+/*********** KONFUGURACJA *******************/
+
+#define Z_MAX 1100
+#define Z_MIN -900
+#define Y_MAX -4600
+#define Y_MIN -7400
 
 /************** I2C Address *****************/
 
@@ -127,5 +137,6 @@
 
 
 void cfg_magneto(I2C_HandleTypeDef *h);
+uint8_t kierunek_kompas(I2C_HandleTypeDef *h);
 
 #endif /* INC_MAGNETO_H_ */
