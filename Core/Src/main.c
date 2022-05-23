@@ -222,43 +222,12 @@ int main(void)
 	  {}
 	  HAL_Delay(500);
 	  
-	  uint8_t magneto_status;
-	  	  int16_t magneto_z, magneto_x, magneto_y;
-	  	  uint8_t *p_magneto_x = (uint8_t*) &magneto_x;
-	  	  uint8_t *p_magneto_y = (uint8_t*) &magneto_y;
-	  	  uint8_t *p_magneto_z = (uint8_t*) &magneto_z;
+//wywolanie funkcji kierunek
+	  char str[50];
+	  int8_t kierunek = kierunek_kompas(&hi2c2);
 
-		  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_STATUS_REG, I2C_MEMADD_SIZE_8BIT, &magneto_status, 1, 1);
-
-		  if (magneto_status & (1 << 0)){
-			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTX_L, I2C_MEMADD_SIZE_8BIT, p_magneto_x, 1, 1);
-			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTX_H, I2C_MEMADD_SIZE_8BIT, p_magneto_x+1, 1, 1);
-	 	 }
-		  if (magneto_status & (1 << 1)){
-		  			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTY_L, I2C_MEMADD_SIZE_8BIT, p_magneto_y, 1, 1);
-		  			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTY_H, I2C_MEMADD_SIZE_8BIT, p_magneto_y+1, 1, 1);
-		  	 	 }
-		  if (magneto_status & (1 << 2)){
-		  			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTZ_L, I2C_MEMADD_SIZE_8BIT, p_magneto_z, 1, 1);
-		  			  HAL_I2C_Mem_Read(&hi2c2, ACC_MAGNETO_ADDR, LIS3MDL_MAG_OUTZ_H, I2C_MEMADD_SIZE_8BIT, p_magneto_z+1, 1, 1);
-		  	 	 }
-
-		  int16_t z_max = 1100, z_min = -900;
-		  int16_t y_max = -7400, y_min = -4600;
-
-		  double z = (double)2.0*(magneto_z-(z_min+z_max)/2.0)/(z_max-z_min);
-		  double y = (double)2.0*(magneto_y-(y_min+y_max)/2.0)/(y_max-y_min);
-		  double kat = (M_PI + atan2(z,y));
-		  uint8_t kierunek = (uint8_t) 255*(kat/2/M_PI);
-
-
-
-		  sprintf(str, "z=%.2f y=%.2f  ", z, y);
-		  BSP_LCD_DisplayStringAtLine(5, (uint8_t *) str);
-		  sprintf(str, "%f  ", 180/M_PI*kat);
-		  BSP_LCD_DisplayStringAtLine(6, (uint8_t *) str);
-		  sprintf(str, "%u  ", kierunek);
-		  BSP_LCD_DisplayStringAtLine(7, (uint8_t *) str);
+	  sprintf(str, "%u  ", kierunek);
+	  BSP_LCD_DisplayStringAtLine(7, (uint8_t *) str);
 
   }
   /* USER CODE END 3 */
