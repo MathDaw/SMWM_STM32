@@ -9,7 +9,9 @@
 
 
 
-
+/*
+ * Konfiguracja magneto
+ */
 void cfg_magneto(I2C_HandleTypeDef *h){
 
 	uint8_t i2c2_buf[10];
@@ -24,6 +26,10 @@ void cfg_magneto(I2C_HandleTypeDef *h){
 }
 
 
+/*
+ * odczytuje wartosc kierunku zwraca wartosc 0-255
+ * (przeskalowana z wartosci kata 0-360 jak w kompasie
+ */
 
 uint8_t kierunek_kompas(I2C_HandleTypeDef *h){
 
