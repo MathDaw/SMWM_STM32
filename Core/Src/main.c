@@ -209,25 +209,25 @@ int main(void)
 
 // przemyśleć gdzie umieścić
 
-	stepper_set_destination(&stepper,5,2);
-	stepper_set_speed(&stepper, 95);
-	stepper_proceed(&stepper);
-	  while(stepper.is_working)
-	  {}
-	  HAL_Delay(500);
-	  stepper_set_destination(&stepper,250,2);
-	  stepper_set_speed(&stepper, 15);
-	  stepper_proceed(&stepper);
-	  while(stepper.is_working)
-	  {}
-	  HAL_Delay(500);
+//	  stepper_set_destination(&stepper,5,2);
+//	  stepper_set_speed(&stepper, 95);
+//	  stepper_proceed(&stepper);
+//	  while(stepper.is_working)
+//	  {}
+//	  HAL_Delay(500);
+//	  stepper_set_destination(&stepper,250,2);
+//	  stepper_set_speed(&stepper, 15);
+//	  stepper_proceed(&stepper);
+//	  while(stepper.is_working)
+//	  {}
+//	  HAL_Delay(500);
 	  
-//wywolanie funkcji kierunek
-	  char str[50];
-	  int8_t kierunek = kierunek_kompas(&hi2c2);
-
-	  sprintf(str, "%u  ", kierunek);
-	  BSP_LCD_DisplayStringAtLine(7, (uint8_t *) str);
+////wywolanie funkcji kierunek
+//	  char str[50];
+//	  int8_t kierunek = kierunek_kompas(&hi2c2);
+//
+//	  sprintf(str, "%u  ", kierunek);
+//	  BSP_LCD_DisplayStringAtLine(7, (uint8_t *) str);
 
   }
   /* USER CODE END 3 */
@@ -687,33 +687,6 @@ void StInit(void)
 	  flick_reset();
 	  flick_set_param(0x90, 0x20, 0x20);
 
-/* Stepstick */
-
-  /*
-   * Stary kod
-  HAL_TIM_Base_Start(&htim4);
-
-  HAL_GPIO_WritePin(MOT_RESET_GPIO_Port, MOT_RESET_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(MOT_MODE1_GPIO_Port, MOT_MODE1_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(MOT_MODE2_GPIO_Port, MOT_MODE2_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(MOT_RESET_GPIO_Port, MOT_RESET_Pin, GPIO_PIN_SET);
-  */
-  /*
-   * #define MOT_REF_Pin GPIO_PIN_7
-  #define MOT_REF_GPIO_Port GPIOC
-  #define MOT_DIR1_Pin GPIO_PIN_8
-  #define MOT_DIR1_GPIO_Port GPIOA
-  #define MOT_RESET_Pin GPIO_PIN_9
-  #define MOT_RESET_GPIO_Port GPIOA
-  #define MOT_FAULT_Pin GPIO_PIN_10
-  #define MOT_FAULT_GPIO_Port GPIOA
-  #define MOT_PWM1_Pin GPIO_PIN_3
-  #define MOT_PWM1_GPIO_Port GPIOB
-  #define MOT_MODE1_Pin GPIO_PIN_4
-  #define MOT_MODE1_GPIO_Port GPIOB
-  #define MOT_MODE2_Pin GPIO_PIN_6
-  #define MOT_MODE2_GPIO_Port GPIOB
-   */
 
   stepper = stepper_inizialize(
 			GPIOC, GPIO_PIN_7,
@@ -808,6 +781,11 @@ void StAzimuth(void)
 	uint8_t last_angle = 0;
 
 	// dodać odczyt z magnetometru
+	//wywolanie funkcji kierunek
+	angle = kierunek_kompas(&hi2c2);	//0-255
+
+	//sprintf(str, "%u  ", kierunek);
+	//BSP_LCD_DisplayStringAtLine(7, (uint8_t *) str);
 
 	flick_poll_data(&gesture, &touch, &airwheel);
 
@@ -824,18 +802,25 @@ void StAzimuth(void)
 		last_state = current_state;
 	}
 
-	uint8_t set_angle_1 = 3.14/3;	// kat testowy
+	//uint8_t set_angle_1 = 3.14/3;	// kat testowy
 	if (set_angle_1 != angle)
 	{
 		LCD_PrintDirection(set_angle_1, set_angle_1, 64, 80, 50, LCD_COLOR_BLACK); // zadany azymut
 	}
 
-	angle = 3.14/4;	// kat testowy
+	//angle = 3.14/4;	// kat testowy
 	LCD_PrintDirection(angle, last_angle, 64, 80, 50, LCD_COLOR_RED); //aktualny azymut
 
 	last_angle = angle;
 
 	// dodać sterowanie silnikiem
+
+	uint8_t set_position = angle - set_angle_1;
+	if(!stepper.is_working)
+	{
+		stepper_set_destination(&stepper,set_position,2);
+		stepper_proceed(&stepper);
+	}
 
 	// Przejść do stanu Menu
 	flick_interaction_t interaction = flick_get_interaction(gesture,touch,airwheel);
@@ -850,6 +835,9 @@ void StRange(void)
 	char str[40];
 
 	uint8_t angle;
+	uint8_t last_angle = 0;
+
+	angle = kierunek_kompas(&hi2c2);	//0-255
 
 	// dodać odczyt z magnetometru
 
@@ -866,20 +854,34 @@ void StRange(void)
 		last_state = current_state;
 	}
 
-	angle = 0;	// kat testowy
-	LCD_PrintDirection(angle, angle, 64, 80, 50, LCD_COLOR_RED); //aktualny azymut
+	//angle = 0;	// kat testowy
+	LCD_PrintDirection(angle, last_angle, 64, 80, 50, LCD_COLOR_RED); //aktualny azymut
 
 	//dodać zadany przez użytkownika dolny ogranicznik
-	uint8_t set_angle_1 = 0;	// kat testowy
-	LCD_PrintDirection(set_angle_1, set_angle_1, 64, 80, 50, LCD_COLOR_BLACK); //ogranicznik 1
-
+	//uint8_t set_angle_1 = 0;	// kat testowy
+	if (set_angle_1 != angle)
+	{
+		LCD_PrintDirection(set_angle_1, set_angle_1, 64, 80, 50, LCD_COLOR_BLACK); //ogranicznik 1
+	}
 	//dodać zadany przez użytkownika gorny ogranicznik
-	uint8_t set_angle_2 = 0;	// kat testowy
-	LCD_PrintDirection(set_angle_2, set_angle_2, 64, 80, 50, LCD_COLOR_BLACK); // ogranicznik 2
+	//uint8_t set_angle_2 = 0;	// kat testowy
 
+	if (set_angle_2 != angle)
+	{
+		LCD_PrintDirection(set_angle_2, set_angle_2, 64, 80, 50, LCD_COLOR_BLACK); // ogranicznik 2
+	}
 
 	//dodać sterowanie silnikiem
+	uint8_t set_angle = set_angle_1;
+	if(set_angle_1 == angle) angle = set_angle_2;
+	if(set_angle_2 == angle) angle = set_angle_1;
+	uint8_t set_position = angle - set_angle;
 
+	if(!stepper.is_working)
+	{
+		stepper_set_destination(&stepper,set_position,2);
+		stepper_proceed(&stepper);
+	}
 
 	// Przejść do stanu Menu
 	flick_interaction_t interaction = flick_get_interaction(gesture,touch,airwheel);
@@ -1013,12 +1015,13 @@ void StSpeed (void)
 		last_state = current_state;
 	}
 
-
+	flick_set_speed(&servo_speed, airwheel, &rotation_cnt);
+	stepper_set_speed(&stepper, servo_speed);
 	// odczyt z flick i zmiana predkosci
 
 	//wyswietlenie nastawionej predkosci
-//	sprintf(str, "   %02x   ", servo_speed);
-//	BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
+	sprintf(str, "   %02x   ", servo_speed);
+	BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
 
 	// zatwierdz kliknieciem
 	flick_interaction_t interaction = flick_get_interaction(gesture,touch,airwheel);
