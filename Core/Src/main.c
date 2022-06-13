@@ -120,7 +120,7 @@ typedef enum {ST_INIT, ST_MENU, ST_AZIMUTH, ST_RANGE, ST_EDIT,ST_SPEED} state_na
 //typedef enum {ST_AZIMUTH, ST_RANGE} mode_name_t;
 state_name_t current_state;
 state_name_t last_state;
-state_name_t select_mode;
+state_name_t select_mode = 2;
 //mode_name_t select_mode;
 
 uint8_t opt;
@@ -135,15 +135,15 @@ airwheel_data_t airwheel;
 //stepper
 STEPPER stepper;
 
-//void Pulse_Counter(void)
-//{
-//	if (pulse_cnt > 0) pulse_cnt--;
-//	else
-//	{
-//		HAL_TIM_PWM_Stop_IT(&htim2, TIM_CHANNEL_2);
-//		__HAL_TIM_SET_COUNTER(&htim2, 2000);
-//	}
-//}
+void Pulse_Counter(void)
+{
+	if (pulse_cnt > 0) pulse_cnt--;
+	else
+	{
+		HAL_TIM_PWM_Stop_IT(&htim2, TIM_CHANNEL_2);
+		__HAL_TIM_SET_COUNTER(&htim2, 2000);
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -724,7 +724,7 @@ void StInit(void)
 
 void StMenu(void)
 {
-	flick_poll_data(&gesture, &touch, &airwheel);
+	//flick_poll_data(&gesture, &touch, &airwheel);
 
 	if(current_state != last_state)
 	{
@@ -750,10 +750,11 @@ void StMenu(void)
 	}
 
 	// Odczyt gestu flick
-
+	flick_poll_data(&gesture, &touch, &airwheel);
+	HAL_Delay(10);
 	flick_interaction_t interaction=flick_get_interaction(gesture,touch,airwheel);
 
-	// Przejście do odpowiedniego stanu
+	// Przejście do odpowiedniego stanus
 
 //	if(interaction == FLICK_NO_INTERACTION)
 //	{
@@ -765,14 +766,16 @@ void StMenu(void)
 	{
 		current_state = ST_EDIT;
 	}
-	if(interaction == FLICK_TOUCH_PRAWO)
+	else if(interaction == FLICK_TOUCH_PRAWO)
 	{
 		current_state = ST_SPEED;
 	}
-	if(interaction == FLICK_TOUCH_DOL)
+	else if(interaction == FLICK_TOUCH_DOL)
 	{
 		current_state = select_mode;
 	}
+//	else
+//		current_state = select_mode;
 }
 void StAzimuth(void)
 {
@@ -898,12 +901,14 @@ void StEdit (void)
 	flick_poll_data(&gesture, &touch, &airwheel);
 	if(current_state != last_state)
 	{
+
 		opt = 0;
 		last_opt = 1;
+		last_state = current_state;
 	}
-	switch (opt)
+
+	if(opt == 0)
 	{
-	case 0:
 		if(last_opt != opt)
 		{
 			BSP_LCD_Clear(LCD_COLOR_WHITE);
@@ -914,7 +919,8 @@ void StEdit (void)
 			BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
 		}
 
-		uint8_t tmp = 0;
+		uint8_t tmp = select_mode*10;
+		//flick_set_speed(&tmp, airwheel, &rotation_cnt);
 		flick_set_value(&tmp, ST_AZIMUTH*10, ST_RANGE*10);
 		select_mode = tmp/10;
 
@@ -923,34 +929,36 @@ void StEdit (void)
 			sprintf(str, "     Azymut    ");
 			BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
 		}
-		if(select_mode == ST_RANGE)
+		else if(select_mode == ST_RANGE)
 		{
 			sprintf(str, "     Zakres     ");
 			BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
 		}
-		last_opt = opt;
-		break;
 
-	case 1:
+		last_opt = opt;
+	}
+
+	else if(opt == 1)
+	{
 		if(last_opt != opt)
 		{
 			BSP_LCD_Clear(LCD_COLOR_WHITE);
-			sprintf(str, "Podaj dolna wartosc ograniczajaca");
+			sprintf(str, "Podaj dol wart");//osc ograniczajaca");
 			BSP_LCD_DisplayStringAt(0, 10, (uint8_t *) str, CENTER_MODE);
 
 			sprintf(str, "Zatwierdz");
 			BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
 		}
-
+		//flick_set_speed(&set_angle_1, airwheel, &rotation_cnt);
 		flick_set_value(&set_angle_1, 0, 360);
 
 		sprintf(str, "   %02x   ", set_angle_1);
 		BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
-
 		last_opt = opt;
-		break;
+	}
 
-	case 2:
+	else if(opt == 2)
+	{
 		if(select_mode == ST_RANGE)
 		{
 			if(last_opt != opt)
@@ -971,19 +979,20 @@ void StEdit (void)
 			last_opt = opt;
 		}
 		else opt++;
-		break;
-
-	default:
-		current_state = ST_MENU;
-		break;
 	}
+
+	else
+	{
+		current_state = ST_MENU;
+	}
+	HAL_Delay(500);
 
 	// odczyt z flick
 
 //	if(select_mode == ST_RANGE)
 //	{
 //		BSP_LCD_Clear(LCD_COLOR_WHITE);
-//		sprintf(str, "Podaj gorna wartosc ograniczajaca");
+//		sprintf(str, "Podaj gorna wart") //osc ograniczajaca");
 //		BSP_LCD_DisplayStringAt(0, 10, (uint8_t *) str, CENTER_MODE);
 //
 //		sprintf(str, "   %02x   ", set_angle_2);
@@ -1007,7 +1016,7 @@ void StSpeed (void)
 	{
 		BSP_LCD_Clear(LCD_COLOR_WHITE);
 
-		sprintf(str, "Podaj prędkosc silnika");
+		sprintf(str, "Podaj predkosc siln");
 		BSP_LCD_DisplayStringAt(0, 10, (uint8_t *) str, CENTER_MODE);
 
 		sprintf(str, "Zatwierdz");
@@ -1032,16 +1041,17 @@ void StSpeed (void)
 }
 void flick_set_value(uint16_t *value, uint16_t min_value, uint16_t max_value)
 {
+	flick_poll_data(&gesture, &touch, &airwheel);
 	flick_interaction_t interaction = flick_get_interaction(gesture,touch,airwheel);
 	if(interaction == FLICK_TOUCH_LEWO)
 	{
-		value = value - 10;
-		if(value < min_value) value = min_value;
+		*value = *value - 10;
+		if(*value < min_value) *value = min_value;
 	}
-	if(interaction == FLICK_TOUCH_LEWO)
+	else if(interaction == FLICK_TOUCH_PRAWO)
 	{
-		value = value + 10;
-		if(value > max_value) value = max_value;
+		*value = *value + 10;
+		if(*value > max_value) *value = max_value;
 	}
 }
 // sprawdzić

@@ -195,10 +195,10 @@ void LCD_PrintDirection(uint8_t pos,uint8_t last_pos,uint8_t x_center,uint8_t y_
 
 
 
-	int angle = pos;	// ustalić format wejściowy (kat w radianach)
-	int last_angle = last_pos;
+	float angle = (float)pos/255*2*3.14;	// ustalić format wejściowy (kat w radianach)
+	float last_angle = (float)last_pos/255*2*3.14;
 	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
-	BSP_LCD_DrawLine(x_center, y_center, (sin(angle)*radius) + x_center, (cos(angle)*radius) + y_center);
+	BSP_LCD_DrawLine(x_center, y_center, (sin(last_angle)*radius) + x_center, (cos(angle)*radius) + y_center);
 	BSP_LCD_SetTextColor(line_color);
 	BSP_LCD_DrawPixel(x_center, y_center, line_color);
 	BSP_LCD_DrawLine(x_center, y_center, (sin(angle)*radius) + x_center, (cos(angle)*radius) + y_center);
