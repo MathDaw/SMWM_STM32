@@ -117,11 +117,11 @@ void flick_set_value(uint16_t *value, uint16_t min_value, uint16_t max_value);
 void (*state_array[])() = {StInit, StMenu, StAzimuth,StRange,StEdit,StSpeed};
 /* an enumerated type used for indexing the state_array */
 typedef enum {ST_INIT, ST_MENU, ST_AZIMUTH, ST_RANGE, ST_EDIT,ST_SPEED} state_name_t;
-//typedef enum {ST_AZIMUTH, ST_RANGE} mode_name_t;
+
 state_name_t current_state;
 state_name_t last_state;
 state_name_t select_mode = 2;
-//mode_name_t select_mode;
+
 
 uint8_t opt;
 uint8_t last_opt;
@@ -183,11 +183,6 @@ int main(void)
   MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
 
-
-
-
-
-
   /* Magneto */
   /* cfg magneto */
 
@@ -206,28 +201,6 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
 	  state_array[current_state]();
-
-// przemyśleć gdzie umieścić
-
-//	  stepper_set_destination(&stepper,5,2);
-//	  stepper_set_speed(&stepper, 95);
-//	  stepper_proceed(&stepper);
-//	  while(stepper.is_working)
-//	  {}
-//	  HAL_Delay(500);
-//	  stepper_set_destination(&stepper,250,2);
-//	  stepper_set_speed(&stepper, 15);
-//	  stepper_proceed(&stepper);
-//	  while(stepper.is_working)
-//	  {}
-//	  HAL_Delay(500);
-	  
-////wywolanie funkcji kierunek
-//	  char str[50];
-//	  int8_t kierunek = kierunek_kompas(&hi2c2);
-//
-//	  sprintf(str, "%u  ", kierunek);
-//	  BSP_LCD_DisplayStringAtLine(7, (uint8_t *) str);
 
   }
   /* USER CODE END 3 */
@@ -672,13 +645,6 @@ void StInit(void)
 	  BSP_LCD_Init();
 	  BSP_LCD_DisplayOn();
 
-//	  BSP_LCD_DisplayStringAtLine(2, (uint8_t *) "testTestTest");
-//	  HAL_Delay(1000);
-//	  BSP_LCD_Clear(LCD_COLOR_YELLOW);
-//	  HAL_Delay(1000);
-//	  BSP_LCD_DisplayStringAtLine(3, (uint8_t *) "test");
-//	  HAL_Delay(1000);
-
 	  /* Sensors */
 	  HAL_I2C_Init(&hi2c1);
 	  HAL_I2C_Init(&hi2c2);
@@ -703,10 +669,6 @@ void StInit(void)
 	  HAL_I2C_Mem_Read(&hi2c2, ACC_GYRO_ADDR, WHO_AM_I, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
 	  HAL_I2C_Mem_Read(&hi2c2, 0x1e<<1, 0x0f, I2C_MEMADD_SIZE_8BIT, i2c2_buf+1, 1, 1);
 
-//	  char str[40];
-//	  sprintf(str, "Who? A/G:%02x M:%02x", i2c2_buf[0], i2c2_buf[1]);
-//	  BSP_LCD_DisplayStringAtLine(10, (uint8_t *) str);
-
 	  /* cfg gyro */
 	  i2c2_buf[0] = 0x38;		// enable X,Y,Z axes
 	  HAL_I2C_Mem_Write(&hi2c2, ACC_GYRO_ADDR, CTRL10_C, I2C_MEMADD_SIZE_8BIT, i2c2_buf, 1, 1);
@@ -724,8 +686,6 @@ void StInit(void)
 
 void StMenu(void)
 {
-	//flick_poll_data(&gesture, &touch, &airwheel);
-
 	if(current_state != last_state)
 	{
 		char str[40];
@@ -756,12 +716,6 @@ void StMenu(void)
 
 	// Przejście do odpowiedniego stanus
 
-//	if(interaction == FLICK_NO_INTERACTION)
-//	{
-//		BSP_LCD_Clear(LCD_COLOR_YELLOW);
-//		HAL_Delay(500);
-//	}
-
 	if(interaction == FLICK_TOUCH_LEWO)
 	{
 		current_state = ST_EDIT;
@@ -774,8 +728,6 @@ void StMenu(void)
 	{
 		current_state = select_mode;
 	}
-//	else
-//		current_state = select_mode;
 }
 void StAzimuth(void)
 {
@@ -783,12 +735,9 @@ void StAzimuth(void)
 	uint8_t angle = 0;
 	uint8_t last_angle = 0;
 
-	// dodać odczyt z magnetometru
-	//wywolanie funkcji kierunek
+	// odczyt z magnetometru
+	// wywolanie funkcji kierunek
 	angle = kierunek_kompas(&hi2c2);	//0-255
-
-	//sprintf(str, "%u  ", kierunek);
-	//BSP_LCD_DisplayStringAtLine(7, (uint8_t *) str);
 
 	flick_poll_data(&gesture, &touch, &airwheel);
 
@@ -842,7 +791,7 @@ void StRange(void)
 
 	angle = kierunek_kompas(&hi2c2);	//0-255
 
-	// dodać odczyt z magnetometru
+	// odczyt z magnetometru
 
 	flick_poll_data(&gesture, &touch, &airwheel);
 	if(current_state != last_state)
@@ -860,13 +809,13 @@ void StRange(void)
 	//angle = 0;	// kat testowy
 	LCD_PrintDirection(angle, last_angle, 64, 80, 50, LCD_COLOR_RED); //aktualny azymut
 
-	//dodać zadany przez użytkownika dolny ogranicznik
+	//zadany przez użytkownika dolny ogranicznik
 	//uint8_t set_angle_1 = 0;	// kat testowy
 	if (set_angle_1 != angle)
 	{
 		LCD_PrintDirection(set_angle_1, set_angle_1, 64, 80, 50, LCD_COLOR_BLACK); //ogranicznik 1
 	}
-	//dodać zadany przez użytkownika gorny ogranicznik
+	//zadany przez użytkownika gorny ogranicznik
 	//uint8_t set_angle_2 = 0;	// kat testowy
 
 	if (set_angle_2 != angle)
@@ -874,7 +823,7 @@ void StRange(void)
 		LCD_PrintDirection(set_angle_2, set_angle_2, 64, 80, 50, LCD_COLOR_BLACK); // ogranicznik 2
 	}
 
-	//dodać sterowanie silnikiem
+	//sterowanie silnikiem
 	uint8_t set_angle = set_angle_1;
 	if(set_angle_1 == angle) angle = set_angle_2;
 	if(set_angle_2 == angle) angle = set_angle_1;
@@ -920,7 +869,6 @@ void StEdit (void)
 		}
 
 		uint8_t tmp = select_mode*10;
-		//flick_set_speed(&tmp, airwheel, &rotation_cnt);
 		flick_set_value(&tmp, ST_AZIMUTH*10, ST_RANGE*10);
 		select_mode = tmp/10;
 
@@ -943,16 +891,16 @@ void StEdit (void)
 		if(last_opt != opt)
 		{
 			BSP_LCD_Clear(LCD_COLOR_WHITE);
-			sprintf(str, "Podaj dol wart");//osc ograniczajaca");
+			sprintf(str, "Podaj dol wart");
 			BSP_LCD_DisplayStringAt(0, 10, (uint8_t *) str, CENTER_MODE);
 
 			sprintf(str, "Zatwierdz");
 			BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
 		}
-		//flick_set_speed(&set_angle_1, airwheel, &rotation_cnt);
-		flick_set_value(&set_angle_1, 0, 360);
 
-		sprintf(str, "   %02x   ", set_angle_1);
+		flick_set_value(&set_angle_1, 0, 255);
+
+		sprintf(str, "   %02d   ", set_angle_1);
 		BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
 		last_opt = opt;
 	}
@@ -964,16 +912,16 @@ void StEdit (void)
 			if(last_opt != opt)
 			{
 				BSP_LCD_Clear(LCD_COLOR_WHITE);
-				sprintf(str, "Podaj gorna wartosc ograniczajaca");
+				sprintf(str, "Podaj gorna wart");
 				BSP_LCD_DisplayStringAt(0, 10, (uint8_t *) str, CENTER_MODE);
 
 				sprintf(str, "Zatwierdz");
 				BSP_LCD_DisplayStringAt(0, 147, (uint8_t *) str, CENTER_MODE);
 			}
 
-			flick_set_value(&set_angle_2, 0, 360);
+			flick_set_value(&set_angle_2, 0, 255);
 
-			sprintf(str, "   %02x   ", set_angle_2);
+			sprintf(str, "   %02d   ", set_angle_2);
 			BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
 
 			last_opt = opt;
@@ -986,20 +934,6 @@ void StEdit (void)
 		current_state = ST_MENU;
 	}
 	HAL_Delay(500);
-
-	// odczyt z flick
-
-//	if(select_mode == ST_RANGE)
-//	{
-//		BSP_LCD_Clear(LCD_COLOR_WHITE);
-//		sprintf(str, "Podaj gorna wart") //osc ograniczajaca");
-//		BSP_LCD_DisplayStringAt(0, 10, (uint8_t *) str, CENTER_MODE);
-//
-//		sprintf(str, "   %02x   ", set_angle_2);
-//		BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
-//	}
-
-	// odczyt z flick
 
 	// przejscie do kolejnej opcji
 	flick_interaction_t interaction = flick_get_interaction(gesture,touch,airwheel);
@@ -1029,7 +963,7 @@ void StSpeed (void)
 	// odczyt z flick i zmiana predkosci
 
 	//wyswietlenie nastawionej predkosci
-	sprintf(str, "   %02x   ", servo_speed);
+	sprintf(str, "   %02d   ", servo_speed);
 	BSP_LCD_DisplayStringAt(0, 60, (uint8_t *) str, CENTER_MODE);
 
 	// zatwierdz kliknieciem
@@ -1054,7 +988,6 @@ void flick_set_value(uint16_t *value, uint16_t min_value, uint16_t max_value)
 		if(*value > max_value) *value = max_value;
 	}
 }
-// sprawdzić
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
